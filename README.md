@@ -26,6 +26,28 @@ npm start
 La primera vez se genera una clave de administración en `data/clave-admin.txt`. Para elegir otra, se
 arranca con la variable `ADMIN_CLAVE` (mínimo 8 caracteres).
 
+### Contenido de ejemplo
+
+Para una demo, o para arrancar con algo armado:
+
+```bash
+npm run ejemplo
+```
+
+Carga desde `ejemplo/` dos pantallas (Principal en Tablero y Comedor en cuadrícula 2×2) y dos avisos con
+imagen: una capacitación con QR y un menú del día en formato afiche, que sale solo en el Comedor. No pisa una
+configuración existente. Para reemplazarla: `npm run ejemplo -- --forzar`.
+
+### Qué vive en el repo y qué no
+
+Todo el sistema y el contenido de ejemplo están en el repo. `data/` no se sube. Se genera al usar la
+instalación de cada cliente y tiene:
+
+- `config.json`: lo que se define en el admin
+- `medios/`: las imágenes subidas
+- `cache.json`: las últimas noticias, se regenera solo
+- `clave-admin.txt`: la clave del admin. Nunca va al repo, porque una contraseña en git queda en el historial.
+
 ## Qué se define desde el admin
 
 - **Pantallas**: una por TV, cada una con su dirección. El admin muestra si está en línea y una vista
@@ -77,7 +99,9 @@ public/tv.*         pantalla de las TVs
 public/admin.*      panel de administración
 public/sw.js        service worker (copia para cortes)
 public/vendor/      qrcode-generator (MIT, Kazuhiko Arase)
-data/               config, caché, imágenes y clave (no se sube al repo)
+ejemplo/            contenido de demo (npm run ejemplo)
+scripts/            cargar-ejemplo.mjs
+data/               config, caché, imágenes y clave de cada instalación (no se sube al repo)
 test/               npm test
 ```
 

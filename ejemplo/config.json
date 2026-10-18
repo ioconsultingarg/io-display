@@ -1,0 +1,134 @@
+{
+  "marca": {
+    "nombre": "Informática hoy",
+    "acento": "#EF4444",
+    "logo": ""
+  },
+  "pantallas": [
+    {
+      "id": "principal",
+      "nombre": "Pantalla principal",
+      "plantilla": "tablero",
+      "zonas": {
+        "principal": "mixto",
+        "lateral": "cola",
+        "barra": "fuentes"
+      }
+    },
+    {
+      "id": "comedor",
+      "nombre": "Comedor",
+      "plantilla": "cuadricula",
+      "zonas": {
+        "z1": "noticias",
+        "z2": "avisos",
+        "z3": "avisos",
+        "z4": "noticias"
+      }
+    }
+  ],
+  "avisos": [
+    {
+      "id": "amvear1qgok2r",
+      "titulo": "Menú del día",
+      "texto": "",
+      "imagen": "/medios/a9fdb377f84bebada7c0cc40.png",
+      "link": "",
+      "formato": "afiche",
+      "segundos": 10,
+      "desde": "",
+      "hasta": "",
+      "horaDesde": "",
+      "horaHasta": "",
+      "pantallas": [
+        "comedor"
+      ],
+      "activo": true
+    },
+    {
+      "id": "amveaqzb47zum",
+      "titulo": "Jueves 23: capacitación en ciberseguridad",
+      "texto": "Sala de reuniones 2, de 10 a 12 h. Cómo detectar correos de phishing y proteger las contraseñas. Anotate escaneando el código.",
+      "imagen": "/medios/cdafdd6e42866a81fec881cb.png",
+      "link": "https://ioconsulting.com.ar/",
+      "formato": "tarjeta",
+      "segundos": 12,
+      "desde": "",
+      "hasta": "",
+      "horaDesde": "",
+      "horaHasta": "",
+      "pantallas": [],
+      "activo": true
+    }
+  ],
+  "urgente": {
+    "activo": false,
+    "titulo": "",
+    "texto": "",
+    "color": "rojo"
+  },
+  "intercalar": 3,
+  "fuentes": [
+    {
+      "id": "xataka",
+      "nombre": "Xataka",
+      "url": "https://www.xataka.com/feedburner.xml",
+      "activa": true
+    },
+    {
+      "id": "genbeta",
+      "nombre": "Genbeta",
+      "url": "https://www.genbeta.com/feedburner.xml",
+      "activa": true
+    },
+    {
+      "id": "hipertextual",
+      "nombre": "Hipertextual",
+      "url": "https://hipertextual.com/feed",
+      "activa": true
+    },
+    {
+      "id": "muycomputer",
+      "nombre": "MuyComputer",
+      "url": "https://www.muycomputer.com/feed/",
+      "activa": true
+    },
+    {
+      "id": "infobae",
+      "nombre": "Infobae Tecno",
+      "url": "https://www.infobae.com/arc/outboundfeeds/rss/category/tecno/",
+      "activa": true
+    },
+    {
+      "id": "fayerwayer",
+      "nombre": "FayerWayer",
+      "url": "https://www.fayerwayer.com/arc/outboundfeeds/rss/?outputType=xml",
+      "activa": true
+    },
+    {
+      "id": "welivesecurity",
+      "nombre": "WeLiveSecurity",
+      "url": "https://www.welivesecurity.com/es/rss/feed/",
+      "activa": true
+    },
+    {
+      "id": "muyseguridad",
+      "nombre": "MuySeguridad",
+      "url": "https://www.muyseguridad.net/feed/",
+      "activa": true
+    },
+    {
+      "id": "xataka-mo-vil-irpm",
+      "nombre": "Xataka Móvil",
+      "url": "https://www.xatakamovil.com/feedburner.xml",
+      "activa": true
+    }
+  ],
+  "ocultas": [],
+  "destacadas": [],
+  "excluir": [],
+  "soloDestacadas": false,
+  "segundos": 16,
+  "horas": 72,
+  "porFuente": 6
+}
