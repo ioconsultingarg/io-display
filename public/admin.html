@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Administración · Pantalla IT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020617; --card: #0E1223; --card-2: #111830; --border: #334155; --fg: #F8FAFC; --muted: #94A3B8;
+    --accent: #EF4444; --accent-hover: #DC2626; --ok: #22C55E; --aviso: #F59E0B; --foco: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font: 16px/1.5 "Roboto", system-ui, sans-serif; min-height: 100vh; }
+  a { color: var(--fg); text-underline-offset: 3px; }
+  .mono { font-family: "Roboto Mono", ui-monospace, monospace; font-size: .9em; }
+  .muted { color: var(--muted); }
+  :focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  button, .boton { font: inherit; font-weight: 500; cursor: pointer; border: 2px solid var(--border); background: var(--card-2); color: var(--fg); padding: 8px 14px; min-height: 44px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; transition: background .15s, border-color .15s; }
+  button:hover, .boton:hover { border-color: var(--muted); }
+  button.primario { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+  button.primario:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  button.chico { min-height: 36px; padding: 4px 10px; font-size: 14px; }
+  button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  button:disabled { opacity: .5; cursor: progress; }
+  input, select, textarea { font: inherit; color: var(--fg); background: var(--bg); border: 2px solid var(--border); padding: 8px 10px; min-height: 44px; width: 100%; }
+  input:focus, select:focus, textarea:focus { border-color: var(--fg); outline: none; }
+  label { display: block; font-weight: 500; margin-bottom: 6px; }
+  .ayuda { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; accent-color: var(--accent); cursor: pointer; }
+
+  /* login */
+  .login { max-width: 400px; margin: 12vh auto; padding: 0 16px; }
+  .login form { background: var(--card); border: 2px solid var(--border); padding: 28px; display: grid; gap: 16px; }
+  .login h1 { font-family: "Newsreader", serif; font-size: 32px; line-height: 1.1; }
+  .error { color: #FCA5A5; font-size: 15px; min-height: 1.5em; }
+
+  /* app */
+  header.top { display: flex; align-items: stretch; border-bottom: 2px solid var(--border); flex-wrap: wrap; }
+  .marca { background: var(--accent); color: #000; font-weight: 700; padding: 0 20px; display: flex; align-items: center; text-transform: uppercase; letter-spacing: .05em; min-height: 60px; }
+  .top .espacio { flex: 1; }
+  .top nav { display: flex; gap: 8px; padding: 8px 16px; align-items: center; flex-wrap: wrap; }
+  .pestanas { display: flex; gap: 0; border-bottom: 2px solid var(--border); padding: 0 16px; overflow-x: auto; }
+  .pestanas button { border: 0; border-bottom: 3px solid transparent; background: none; color: var(--muted); padding: 12px 18px; white-space: nowrap; }
+  .pestanas button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+  main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; }
+  h2 { font-family: "Newsreader", serif; font-size: 28px; font-weight: 600; margin-bottom: 4px; }
+  .intro { color: var(--muted); margin-bottom: 20px; max-width: 70ch; }
+  .tarjeta { background: var(--card); border: 2px solid var(--border); padding: 20px; margin-bottom: 20px; }
+
+  .resumen-estado { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .dato { background: var(--card); border: 2px solid var(--border); padding: 14px 16px; }
+  .dato b { display: block; font-size: 28px; font-family: "Roboto Mono", monospace; }
+  .vista { position: relative; aspect-ratio: 16/9; border: 2px solid var(--border); overflow: hidden; background: #000; }
+  .vista iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { color: var(--muted); font-weight: 500; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
+  td.url { word-break: break-all; color: var(--muted); font-size: 14px; max-width: 360px; }
+  .estado-f { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+  .estado-f::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ok); }
+  .estado-f.mal::before { background: var(--accent); }
+  .estado-f.nada::before { background: var(--muted); }
+  .tabla-scroll { overflow-x: auto; }
+
+  .agregar { display: grid; grid-template-columns: 2fr 1fr auto auto; gap: 12px; align-items: end; }
+  .resultado { margin-top: 12px; font-size: 15px; }
+
+  .filtros { display: grid; grid-template-columns: 1fr 220px auto; gap: 12px; align-items: end; margin-bottom: 16px; }
+  .nota { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); align-items: center; }
+  .nota.apagada .titulo { color: var(--muted); text-decoration: line-through; }
+  .nota .titulo { font-weight: 500; }
+  .nota .meta { font-size: 14px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
+  .badge { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border: 1px solid var(--border); }
+  .badge.d { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .badge.o { border-color: var(--accent); color: #FCA5A5; }
+  .badge.f { border-color: var(--aviso); color: #FCD34D; }
+  .acciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+  .ajustes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+  .fila-check { display: flex; gap: 12px; align-items: flex-start; }
+  .fila-check label { margin: 0; }
+
+  .aviso-flotante { position: fixed; bottom: 20px; right: 20px; background: var(--fg); color: var(--bg); padding: 12px 18px; font-weight: 500; transform: translateY(150%); visibility: hidden; transition: transform .2s, visibility .2s; z-index: 10; }
+  .aviso-flotante.ver { transform: none; visibility: visible; }
+  .aviso-flotante.mal { background: var(--accent); color: #000; }
+
+  @media (max-width: 720px) {
+    .agregar, .filtros { grid-template-columns: 1fr; }
+    .nota { grid-template-columns: 1fr; }
+    .acciones { justify-content: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+  <!-- ingreso -->
+  <section class="login" id="vista-login" hidden>
+    <form id="form-login">
+      <h1>Pantalla de noticias IT</h1>
+      <p class="muted">Ingresá la clave de administración para elegir qué se muestra en la TV.</p>
+      <div>
+        <label for="clave">Clave</label>
+        <input id="clave" type="password" autocomplete="current-password" required>
+      </div>
+      <div class="error" id="error-login" role="alert"></div>
+      <button class="primario" type="submit">Ingresar</button>
+    </form>
+  </section>
+
+  <!-- panel -->
+  <div id="vista-app" hidden>
+    <header class="top">
+      <div class="marca">Pantalla IT · Admin</div>
+      <div class="espacio"></div>
+      <nav>
+        <a class="boton" href="/tv" target="_blank" rel="noopener">Ver la pantalla ↗</a>
+        <button id="salir" type="button">Salir</button>
+      </nav>
+    </header>
+    <div class="pestanas" role="tablist">
+      <button role="tab" aria-selected="true" data-p="estado">Estado</button>
+      <button role="tab" aria-selected="false" data-p="fuentes">Fuentes</button>
+      <button role="tab" aria-selected="false" data-p="noticias">Noticias</button>
+      <button role="tab" aria-selected="false" data-p="ajustes">Ajustes</button>
+    </div>
+
+    <main>
+      <section data-panel="estado">
+        <h2>Lo que está viendo la TV</h2>
+        <p class="intro">La pantalla toma los cambios en menos de un minuto. Si se corta internet, sigue mostrando las últimas noticias guardadas.</p>
+        <div class="resumen-estado" id="datos-estado"></div>
+        <div class="vista" id="vista"><iframe src="/tv" title="Vista previa de la pantalla" tabindex="-1"></iframe></div>
+      </section>
+
+      <section data-panel="fuentes" hidden>
+        <h2>Fuentes RSS</h2>
+        <p class="intro">Elegí de qué medios se toman las noticias. Las fuentes apagadas no aparecen en la TV, pero quedan guardadas.</p>
+        <div class="tarjeta">
+          <div class="tabla-scroll">
+            <table>
+              <thead><tr><th>En TV</th><th>Medio</th><th>Dirección del feed</th><th>Estado</th><th></th></tr></thead>
+              <tbody id="tabla-fuentes"></tbody>
+            </table>
+          </div>
+          <p style="margin-top:16px"><button id="refrescar" type="button">Actualizar las noticias ahora</button></p>
+        </div>
+        <div class="tarjeta">
+          <h3 style="margin-bottom:12px">Agregar una fuente</h3>
+          <form class="agregar" id="form-fuente">
+            <div><label for="f-url">Dirección del feed (RSS o Atom)</label><input id="f-url" type="url" placeholder="https://www.ejemplo.com/feed" required></div>
+            <div><label for="f-nombre">Nombre a mostrar</label><input id="f-nombre" maxlength="40" placeholder="Ej.: Xataka"></div>
+            <button type="button" id="probar">Probar</button>
+            <button type="submit" class="primario" id="agregar" disabled>Agregar</button>
+          </form>
+          <div class="resultado" id="resultado-prueba" role="status"></div>
+        </div>
+      </section>
+
+      <section data-panel="noticias" hidden>
+        <h2>Noticias</h2>
+        <p class="intro">Todas las notas que trajeron las fuentes. <b>Destacar</b> la fija en la pantalla aunque el medio la saque de su feed. <b>Ocultar</b> la saca de la TV.</p>
+        <div class="filtros">
+          <div><label for="buscar">Buscar</label><input id="buscar" type="search" placeholder="Palabra del título"></div>
+          <div><label for="filtro-fuente">Medio</label><select id="filtro-fuente"></select></div>
+          <div class="fila-check" style="padding-bottom:10px"><input type="checkbox" id="ver-ocultas"><label for="ver-ocultas">Mostrar ocultas</label></div>
+        </div>
+        <div id="lista-notas"></div>
+      </section>
+
+      <section data-panel="ajustes" hidden>
+        <h2>Ajustes de la pantalla</h2>
+        <p class="intro">Qué se muestra y a qué ritmo.</p>
+        <form class="tarjeta" id="form-ajustes">
+          <div class="ajustes">
+            <div><label for="a-titulo">Título en la pantalla</label><input id="a-titulo" maxlength="40" required></div>
+            <div><label for="a-segundos">Segundos por noticia</label><input id="a-segundos" type="number" min="8" max="60" required><p class="ayuda">Entre 8 y 60.</p></div>
+            <div><label for="a-horas">Antigüedad máxima (horas)</label><input id="a-horas" type="number" min="6" max="168" required><p class="ayuda">Las notas más viejas no salen, salvo las destacadas.</p></div>
+            <div><label for="a-porfuente">Notas por medio</label><input id="a-porfuente" type="number" min="1" max="15" required><p class="ayuda">Así ningún medio ocupa toda la pantalla.</p></div>
+          </div>
+          <div style="margin-top:20px"><label for="a-excluir">Palabras a excluir</label><textarea id="a-excluir" rows="3" placeholder="Una por línea. Ej.: oferta, descuento, Black Friday"></textarea><p class="ayuda">Si una de estas palabras aparece en el título o el resumen, la nota no sale en la TV.</p></div>
+          <div class="fila-check" style="margin-top:20px"><input type="checkbox" id="a-solo"><div><label for="a-solo">Mostrar solo las destacadas</label><p class="ayuda">Si no hay ninguna destacada, se muestran todas.</p></div></div>
+          <p style="margin-top:20px"><button class="primario" type="submit">Guardar ajustes</button></p>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <div class="aviso-flotante" id="aviso" role="status" aria-live="polite"></div>
+<script src="/admin.js"></script>
+</body>
+</html>

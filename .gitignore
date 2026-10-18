@@ -1,0 +1,6 @@
+# Datos locales: configuración elegida en el admin, caché de feeds y clave
+data/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

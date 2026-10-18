@@ -1,0 +1,13 @@
+{
+  "name": "pantalla-noticias-it",
+  "version": "1.0.0",
+  "description": "Pantalla de TV 24/7 con noticias de informática por RSS, citando fuentes, con panel de administración.",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18.17" },
+  "scripts": {
+    "start": "node servidor.mjs",
+    "test": "node --test"
+  },
+  "license": "UNLICENSED"
+}
