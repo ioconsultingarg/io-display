@@ -1,12 +1,16 @@
 // Panel de administración de IO Display: pantallas y plantillas, avisos propios, noticias RSS,
 // marca y mensaje urgente. Cada cambio se guarda en el servidor al momento; las TVs lo toman
 // en su próxima consulta.
-import { PLANTILLAS, TIPOS, zonasPorDefecto } from "/plantillas.js";
+import { PLANTILLAS, TIPOS, zonasPorDefecto } from "./plantillas.js";
+import { respuestaPantalla, notasParaAdmin, estadoFuentes } from "./logica.js";
+import { ESTATICO, datosBase, configDemo, guardarConfigDemo, restablecerDemo } from "./demo.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const fechaHora = (iso) => (iso ? new Date(iso).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short", hourCycle: "h23" }) : "—");
 const horaCorta = (iso) => new Date(iso).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false });
+// imágenes subidas: "/medios/x" se resuelve contra <base> (en la demo también pueden ser data:)
+const medio = (u) => (u && u.startsWith("/medios/") ? new URL(u.slice(1), document.baseURI).href : u);
 const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30);
 
 let estado = null; // { config, fuentes, notas, pantallas, pantalla, red }
@@ -15,7 +19,51 @@ let avisoEditando = null; // id del aviso en edición, o "" si es nuevo
 let imagenAviso = "";
 
 // ---------- API ----------
+// Demo estática: responde lo mismo que el servidor, pero con datos.json + este navegador
+const MAX_DEMO = 1.5 * 1024 * 1024;
+const leerComoDataURL = (archivo) => new Promise((ok, mal) => {
+  const r = new FileReader();
+  r.onload = () => ok(r.result);
+  r.onerror = () => mal(new Error("No se pudo leer la imagen"));
+  r.readAsDataURL(archivo);
+});
+
+async function apiDemo(metodo, ruta, cuerpo) {
+  const b = await datosBase();
+  const c = configDemo(b);
+  switch (`${metodo} ${ruta}`) {
+    case "GET /api/admin/estado":
+      return {
+        config: c,
+        fuentes: estadoFuentes(c, b.cache),
+        notas: notasParaAdmin(c, b.cache),
+        pantallas: c.pantallas.map((p) => ({ id: p.id, visto: null })),
+        pantalla: respuestaPantalla(c, b.cache, c.pantallas[0].id),
+        red: [],
+      };
+    case "PUT /api/admin/config":
+      if (!cuerpo.pantallas?.length) throw new Error("Tiene que quedar al menos una pantalla.");
+      try {
+        guardarConfigDemo(cuerpo);
+      } catch {
+        throw new Error("No entra en la memoria del navegador: usá imágenes más livianas.");
+      }
+      return { ok: true, config: cuerpo };
+    case "POST /api/admin/medios":
+      if (!/^image\/(png|jpeg|webp|gif)$/.test(cuerpo.type)) throw new Error("La imagen tiene que ser JPG, PNG, WebP o GIF.");
+      if (cuerpo.size > MAX_DEMO) throw new Error("En la demo, las imágenes pueden pesar hasta 1,5 MB (en la instalación real, hasta 8 MB).");
+      return { ok: true, url: await leerComoDataURL(cuerpo) };
+    case "POST /api/admin/refrescar":
+      return { ok: true, demo: true };
+    case "POST /api/admin/probar-feed":
+      return { ok: false, error: "en la demo no se pueden sumar fuentes, porque no hay un servidor que las lea. En la instalación real sí." };
+    default:
+      throw new Error("No disponible en la demo");
+  }
+}
+
 async function api(metodo, ruta, cuerpo, tipo = "application/json") {
+  if (ESTATICO) return apiDemo(metodo, ruta, cuerpo);
   const r = await fetch(ruta, {
     method: metodo,
     headers: cuerpo ? { "Content-Type": tipo } : {},
@@ -83,10 +131,11 @@ const enLinea = (visto) => visto && Date.now() - Date.parse(visto) < 75 * 1000;
 function pintarEstado() {
   const c = estado.config;
   const conectadas = estado.pantallas.filter((p) => enLinea(p.visto)).length;
+  const tvs = ESTATICO ? ["Pantallas configuradas", c.pantallas.length] : ["Pantallas en línea", `${conectadas}/${c.pantallas.length}`];
   const ok = estado.fuentes.filter((f) => f.ok).length;
   const vigentes = c.avisos.filter((a) => situacionAviso(a).clase === "si").length;
   $("datos-estado").innerHTML = [
-    ["Pantallas en línea", `${conectadas}/${c.pantallas.length}`],
+    tvs,
     ["Avisos vigentes", `${vigentes}/${c.avisos.length}`],
     ["Noticias en rotación", estado.pantalla.noticias.length],
     ["Fuentes respondiendo", `${ok}/${c.fuentes.length}`],
@@ -113,7 +162,7 @@ function prepararVista(caja, pantalla) {
   const vertical = PLANTILLAS[pantalla.plantilla]?.orientacion === "vertical";
   caja.classList.toggle("vertical", vertical);
   const f = caja.querySelector("iframe");
-  const src = `/tv/${pantalla.id}?vista=1`;
+  const src = `tv/${pantalla.id}/?vista=1`;
   if (f.getAttribute("src") !== src) f.setAttribute("src", src);
   f.dataset.w = vertical ? 1080 : 1920;
   f.dataset.h = vertical ? 1920 : 1080;
@@ -140,11 +189,13 @@ const MINIS = {
 const mini = (k) => `<span class="mini ${PLANTILLAS[k].orientacion === "vertical" ? "vertical" : ""}" style="grid-template:${MINIS[k].t}">${MINIS[k].z.map((z, i) => `<i class="${i ? "" : "p"}" style="grid-area:${z}"></i>`).join("")}</span>`;
 
 function direccionTV(id) {
+  if (ESTATICO) return new URL(`tv/${id}/`, document.baseURI).href;
   const base = estado.red[0] || location.origin;
   return `${base}/tv/${id}`;
 }
 
 function textoEstadoTV(visto) {
+  if (ESTATICO) return ["", "Demo: abrila en otra pestaña"];
   if (enLinea(visto)) return ["ok", "En línea"];
   if (visto) return ["mal", `Sin señal desde ${fechaHora(visto)}`];
   return ["", "Todavía no se conectó"];
@@ -159,7 +210,7 @@ function pintarPantallas() {
     return `<article class="tarjeta pantalla" data-i="${i}">
       <div>
         <div class="fila-botones" style="justify-content:space-between"><h3 style="margin:0">${esc(p.nombre)}</h3><span class="estado-tv ${cls}" data-estado="${esc(p.id)}">${txt}</span></div>
-        <div class="direccion"><code>${esc(direccionTV(p.id))}</code><button type="button" class="chico" data-copiar="${esc(direccionTV(p.id))}">Copiar</button><a class="boton chico" href="/tv/${esc(p.id)}?vista=1" target="_blank" rel="noopener">Abrir ↗</a></div>
+        <div class="direccion"><code>${esc(direccionTV(p.id))}</code><button type="button" class="chico" data-copiar="${esc(direccionTV(p.id))}">Copiar</button><a class="boton chico" href="tv/${esc(p.id)}/?vista=1" target="_blank" rel="noopener">Abrir ↗</a></div>
         <label for="pn-${i}">Nombre</label>
         <input id="pn-${i}" data-nombre="${i}" value="${esc(p.nombre)}" maxlength="40" style="margin-bottom:16px">
         <fieldset style="border:0;padding:0"><legend style="font-weight:500;margin-bottom:6px">Plantilla</legend>
@@ -261,7 +312,7 @@ function pintarAvisos() {
         const vigencia = [a.desde && `desde ${a.desde.split("-").reverse().join("/")}`, a.hasta && `hasta ${a.hasta.split("-").reverse().join("/")}`, a.horaDesde && a.horaHasta && `de ${a.horaDesde} a ${a.horaHasta}`].filter(Boolean).join(" · ") || "Sin vencimiento";
         const donde = a.pantallas.length ? a.pantallas.map((id) => nombres[id]).join(", ") : "Todas las pantallas";
         return `<div class="aviso">
-          <div class="mini-img" style="${a.imagen ? `background-image:url('${esc(a.imagen)}')` : ""}">${a.imagen ? "" : "Sin imagen"}</div>
+          <div class="mini-img" style="${a.imagen ? `background-image:url('${esc(medio(a.imagen))}')` : ""}">${a.imagen ? "" : "Sin imagen"}</div>
           <div>
             <div style="font-weight:500">${esc(a.titulo || "(sin título, solo imagen)")}</div>
             <div class="meta"><span class="badge ${s.clase}">${esc(s.txt)}</span>${a.formato === "afiche" ? `<span class="badge">Afiche</span>` : ""}<span>${esc(vigencia)}</span><span>${esc(donde)}</span><span>${a.segundos} s</span>${a.link ? `<span>Con QR</span>` : ""}</div>
@@ -279,7 +330,7 @@ function pintarAvisos() {
 function mostrarImagenAviso() {
   $("a-previa").hidden = !imagenAviso;
   $("a-quitar-img").hidden = !imagenAviso;
-  $("a-previa").style.backgroundImage = imagenAviso ? `url('${imagenAviso}')` : "";
+  $("a-previa").style.backgroundImage = imagenAviso ? `url('${medio(imagenAviso)}')` : "";
 }
 
 function abrirFormAviso(a) {
@@ -411,9 +462,9 @@ $("refrescar").addEventListener("click", async (e) => {
   e.target.disabled = true;
   e.target.textContent = "Actualizando…";
   try {
-    await api("POST", "/api/admin/refrescar");
+    const r = await api("POST", "/api/admin/refrescar");
     await cargar({ repintarPantallas: false, conFormularios: false });
-    avisar("Noticias actualizadas.");
+    avisar(r.demo ? "En la demo, las noticias se actualizan solas cada 30 minutos." : "Noticias actualizadas.");
   } catch (err) {
     avisar(err.message, true);
   }
@@ -527,7 +578,7 @@ function pintarAjustes() {
 function mostrarLogo() {
   $("m-logo-previa").hidden = !logo;
   $("m-quitar-logo").hidden = !logo;
-  if (logo) $("m-logo-previa").src = logo;
+  if (logo) $("m-logo-previa").src = medio(logo);
 }
 $("m-logo").addEventListener("change", async () => {
   const f = $("m-logo").files[0];
@@ -584,6 +635,20 @@ document.querySelectorAll(".pestanas button").forEach((b) =>
 );
 
 // ---------- arranque ----------
+if (ESTATICO) {
+  // demo pública: sin clave, con aviso de que los cambios quedan en este navegador
+  $("salir").hidden = true;
+  const banda = document.createElement("div");
+  banda.className = "banda-demo";
+  banda.innerHTML = `<span><b>Demo.</b> No hay servidor: lo que cambies se guarda solo en este navegador y se ve en las pantallas que abras desde acá. En una instalación real, el panel pide clave y los cambios llegan a todas las TVs.</span><button type="button" class="chico" id="restablecer">Restablecer la demo</button>`;
+  $("vista-app").prepend(banda);
+  $("restablecer").addEventListener("click", async () => {
+    if (!confirm("¿Volver a la configuración de ejemplo? Se pierden los cambios hechos en este navegador.")) return;
+    restablecerDemo();
+    await cargar();
+    avisar("Demo restablecida.");
+  });
+}
 cargar().catch(() => mostrarLogin());
 // refresco periódico sin pisar formularios ni recargar las vistas previas
 setInterval(() => !$("vista-app").hidden && document.visibilityState === "visible" && cargar({ repintarPantallas: false, conFormularios: false }).catch(() => {}), 30000);

@@ -8,6 +8,7 @@
   "scripts": {
     "start": "node servidor.mjs",
     "ejemplo": "node scripts/cargar-ejemplo.mjs",
+    "sitio": "node scripts/construir-sitio.mjs",
     "test": "node --test"
   },
   "license": "UNLICENSED"

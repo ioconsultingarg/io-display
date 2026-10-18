@@ -3,8 +3,11 @@
 // o si se reinicia el equipo sin conexión.
 import { readFile, writeFile, rename, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { createHash } from "node:crypto";
-import { bajarFeed, parsearFeed, urlPublicaValida, recortar } from "./rss.mjs";
+import { bajarFeed, parsearFeed, urlPublicaValida } from "./rss.mjs";
+import { armarPantalla, avisoVigente, filtrada, respuestaPantalla, notasParaAdmin, estadoFuentes } from "../public/logica.js";
+
+// la lógica de qué ve cada pantalla vive en public/logica.js (la comparte la demo estática)
+export { armarPantalla, avisoVigente, filtrada };
 import { PLANTILLAS, zonasPorDefecto } from "../public/plantillas.js";
 
 export const FUENTES_POR_DEFECTO = [
@@ -134,68 +137,6 @@ export function sanearConfig(c, previa = CONFIG_POR_DEFECTO) {
   };
 }
 
-const normalizar = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-
-export function filtrada(nota, config) {
-  if (config.ocultas.includes(nota.id)) return true;
-  if (!config.excluir.length) return false;
-  const t = normalizar(nota.titulo + " " + nota.resumen);
-  return config.excluir.some((p) => t.includes(normalizar(p)));
-}
-
-// Arma la lista final que se ve en la TV. Pura: no toca disco ni red (se testea aparte).
-export function armarPantalla(config, cache, ahora = Date.now()) {
-  const activas = config.fuentes.filter((f) => f.activa);
-  const limite = ahora - config.horas * 3600 * 1000;
-  const vistos = new Set();
-
-  const destacadas = config.destacadas
-    .filter((n) => !config.ocultas.includes(n.id) && !vistos.has(n.id) && vistos.add(n.id))
-    .map((n) => ({ ...n, destacada: true }));
-
-  const colas = activas.map((f) =>
-    (cache[f.id]?.items || [])
-      .filter((n) => !vistos.has(n.id) && !filtrada(n, config))
-      .filter((n) => (n.fecha ? Date.parse(n.fecha) : 0) >= limite)
-      .sort((a, b) => Date.parse(b.fecha) - Date.parse(a.fecha))
-      .slice(0, config.porFuente)
-      .map((n) => ({ ...n, fuente: f.nombre }))
-  );
-  // intercaladas: una de cada medio por vuelta, así se ven todas las fuentes
-  const resto = [];
-  while (colas.some((c) => c.length)) colas.forEach((c) => c.length && resto.push(c.shift()));
-  resto.forEach((n) => vistos.add(n.id));
-
-  const noticias = config.soloDestacadas && destacadas.length ? destacadas : [...destacadas, ...resto];
-  return {
-    segundos: config.segundos,
-    noticias: noticias.slice(0, 80).map(({ id, titulo, resumen, link, imagen, fecha, fuente, fuenteId, destacada }) => ({
-      id, titulo, resumen: recortar(resumen || "", 240), link, imagen, fecha, fuente, fuenteId, destacada: !!destacada,
-    })),
-    fuentes: activas.map((f) => ({ id: f.id, nombre: f.nombre, ok: !!cache[f.id]?.ok, actualizado: cache[f.id]?.actualizado || null })),
-  };
-}
-
-const dosDig = (n) => String(n).padStart(2, "0");
-const fechaLocal = (d) => `${d.getFullYear()}-${dosDig(d.getMonth() + 1)}-${dosDig(d.getDate())}`;
-const minutos = (hhmm) => +hhmm.slice(0, 2) * 60 + +hhmm.slice(3);
-
-// ¿Corresponde mostrar este aviso ahora en esta pantalla? (hora local del equipo)
-export function avisoVigente(a, pantallaId, ahora = new Date()) {
-  if (!a.activo) return false;
-  if (a.pantallas.length && !a.pantallas.includes(pantallaId)) return false;
-  const hoy = fechaLocal(ahora);
-  if (a.desde && hoy < a.desde) return false;
-  if (a.hasta && hoy > a.hasta) return false;
-  if (a.horaDesde && a.horaHasta) {
-    const m = ahora.getHours() * 60 + ahora.getMinutes();
-    const ini = minutos(a.horaDesde), fin = minutos(a.horaHasta);
-    const dentro = ini <= fin ? m >= ini && m < fin : m >= ini || m < fin; // franja que cruza la medianoche
-    if (!dentro) return false;
-  }
-  return true;
-}
-
 // Archivos subidos que siguen en uso (para limpiar los huérfanos)
 export const mediosEnUso = (config) => new Set([config.marca.logo, ...config.avisos.map((a) => a.imagen)].filter(Boolean));
 
@@ -204,7 +145,6 @@ export class Almacen {
     this.dir = dir;
     this.config = structuredClone(CONFIG_POR_DEFECTO);
     this.cache = {};
-    this.version = Date.now();
     this.refrescando = null;
     this.vistas = new Map(); // pantallaId -> último contacto de la TV
   }
@@ -236,7 +176,6 @@ export class Almacen {
     const previa = this.config;
     this.config = sanearConfig(nueva, previa);
     await this.#guardar("config.json", this.config);
-    this.version = Date.now();
     const nuevas = this.config.fuentes.filter((f) => f.activa && !this.cache[f.id]);
     if (nuevas.length) this.refrescar(nuevas).catch(() => {});
     return this.config;
@@ -262,7 +201,6 @@ export class Almacen {
       const vigentes = new Set(this.config.fuentes.map((f) => f.id));
       for (const k of Object.keys(this.cache)) if (!vigentes.has(k)) delete this.cache[k];
       await this.#guardar("cache.json", this.cache);
-      this.version = Date.now();
     })().finally(() => (this.refrescando = null));
     return this.refrescando;
   }
@@ -270,20 +208,9 @@ export class Almacen {
   // Lo que pide cada TV. La versión es un hash del contenido: cambia si cambia algo visible
   // (también cuando un aviso entra o sale de su horario, sin que nadie toque la config).
   pantalla(id, { registrar = true } = {}) {
-    const c = this.config;
-    const p = c.pantallas.find((x) => x.id === id) || c.pantallas[0];
-    if (registrar) this.vistas.set(p.id, Date.now());
-    const ahora = new Date();
-    const cuerpo = {
-      marca: c.marca,
-      pantalla: p,
-      intercalar: c.intercalar,
-      avisos: c.avisos.filter((a) => avisoVigente(a, p.id, ahora)).map(({ id, titulo, texto, imagen, link, formato, segundos }) => ({ id, titulo, texto, imagen, link, formato, segundos })),
-      urgente: c.urgente.activo ? c.urgente : null,
-      ...armarPantalla(c, this.cache),
-    };
-    const version = createHash("sha1").update(JSON.stringify(cuerpo)).digest("hex").slice(0, 16);
-    return { version, generado: ahora.toISOString(), ...cuerpo };
+    const r = respuestaPantalla(this.config, this.cache, id);
+    if (registrar) this.vistas.set(r.pantalla.id, Date.now());
+    return r;
   }
 
   estadoPantallas() {
@@ -292,17 +219,10 @@ export class Almacen {
 
   // Para el admin: todas las notas en caché, marcadas según la config
   todasLasNotas() {
-    const destacadas = new Set(this.config.destacadas.map((n) => n.id));
-    return this.config.fuentes
-      .flatMap((f) => (this.cache[f.id]?.items || []).map((n) => ({ ...n, fuente: f.nombre })))
-      .sort((a, b) => Date.parse(b.fecha || 0) - Date.parse(a.fecha || 0))
-      .map((n) => ({ ...n, oculta: this.config.ocultas.includes(n.id), destacada: destacadas.has(n.id), filtrada: filtrada({ ...n, id: "" }, this.config) }));
+    return notasParaAdmin(this.config, this.cache);
   }
 
   estadoFuentes() {
-    return this.config.fuentes.map((f) => {
-      const c = this.cache[f.id] || {};
-      return { id: f.id, ok: !!c.ok, error: c.error || null, actualizado: c.actualizado || null, notas: (c.items || []).length };
-    });
+    return estadoFuentes(this.config, this.cache);
   }
 }

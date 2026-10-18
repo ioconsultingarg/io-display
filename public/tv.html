@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>IO Display</title>
+<!-- Las rutas son relativas a <base>: "/" con el servidor, "/io-display/" en la demo de GitHub Pages -->
+<base href="/">
 <!-- Pantalla para la TV. No tiene controles: lo que se muestra se decide en /admin. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
@@ -163,7 +165,7 @@
 
   <div id="urgente" role="alert"><div class="rotulo">Aviso importante</div><h1 id="urgente-titulo"></h1><p id="urgente-texto"></p></div>
 
-<script src="/vendor/qrcode.js"></script>
-<script type="module" src="/tv.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script type="module" src="tv.js"></script>
 </body>
 </html>

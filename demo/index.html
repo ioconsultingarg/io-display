@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IO Display · Cartelería digital</title>
+<meta name="description" content="Demo de IO Display: cartelería digital para TVs 24/7 con noticias por RSS citando la fuente y avisos propios de la empresa. Por IO Consulting.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #020617; --card: #0E1223; --card-2: #111830; --border: #334155; --fg: #F8FAFC; --muted: #94A3B8; --accent: #EF4444; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font: 17px/1.6 "Roboto", system-ui, sans-serif; }
+  a { color: var(--fg); }
+  :focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  header { display: flex; align-items: stretch; border-bottom: 2px solid var(--border); }
+  .marca { background: var(--accent); color: #000; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 14px 20px; display: flex; align-items: center; gap: 10px; }
+  .marca svg { width: 22px; height: 22px; }
+  header .by { margin-left: auto; display: flex; align-items: center; padding: 0 20px; color: var(--muted); font-size: 14px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 48px 16px 64px; }
+  h1 { font-family: "Newsreader", serif; font-weight: 600; font-size: clamp(36px, 6vw, 64px); line-height: 1.05; letter-spacing: -.01em; max-width: 18ch; }
+  .bajada { color: #CBD5E1; font-size: clamp(17px, 2vw, 20px); max-width: 62ch; margin: 18px 0 32px; }
+  .vista { position: relative; aspect-ratio: 16/9; border: 2px solid var(--border); overflow: hidden; background: #000; margin-bottom: 40px; }
+  .vista iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
+  h2 { font-family: "Newsreader", serif; font-weight: 600; font-size: 30px; margin-bottom: 16px; }
+  .accesos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 16px; margin-bottom: 48px; }
+  .acceso { display: flex; flex-direction: column; gap: 6px; background: var(--card); border: 2px solid var(--border); padding: 20px; text-decoration: none; transition: border-color .15s, background .15s; }
+  .acceso:hover { border-color: var(--accent); background: var(--card-2); }
+  .acceso b { font-size: 19px; }
+  .acceso span { color: var(--muted); font-size: 15px; }
+  .acceso em { font-style: normal; color: var(--accent); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+  .puntos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 24px 32px; margin-bottom: 48px; }
+  .puntos div { border-top: 2px solid var(--border); padding-top: 14px; color: #CBD5E1; font-size: 16px; }
+  .puntos b { display: block; color: var(--fg); margin-bottom: 4px; }
+  .nota { background: #1c1a0b; border: 2px solid #F59E0B; color: #FDE68A; padding: 16px 20px; font-size: 15px; margin-bottom: 48px; }
+  footer { border-top: 2px solid var(--border); color: var(--muted); font-size: 14px; padding: 24px 16px; text-align: center; }
+  footer a { color: var(--fg); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+  <header>
+    <div class="marca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>IO Display</div>
+    <div class="by">Demo · IO Consulting</div>
+  </header>
+
+  <main>
+    <h1>Cartelería digital para las pantallas de tu empresa</h1>
+    <p class="bajada">TVs encendidas las 24 horas en recepciones, comedores y salas de espera, con noticias del rubro citando siempre la fuente y con los avisos propios de la empresa. Todo se maneja desde un panel; las pantallas no se tocan.</p>
+
+    <div class="vista" id="vista"><iframe src="tv/principal/?vista=1" title="Vista en vivo de la pantalla principal" tabindex="-1"></iframe></div>
+
+    <h2>Probá la demo</h2>
+    <div class="accesos">
+      <a class="acceso" href="tv/principal/"><em>Pantalla</em><b>Recepción · Tablero</b><span>Noticia principal, "A continuación" y fuentes citadas. Pensada para 1920×1080.</span></a>
+      <a class="acceso" href="tv/comedor/"><em>Pantalla</em><b>Comedor · Cuadrícula 2×2</b><span>Cuatro contenidos a la vez, incluido el menú del día, que sale solo acá.</span></a>
+      <a class="acceso" href="admin/"><em>Panel</em><b>Administración</b><span>Pantallas, plantillas, avisos con imagen y QR, noticias, marca y mensaje urgente.</span></a>
+      <a class="acceso" href="bocetos/"><em>Diseño</em><b>Bocetos de estilo</b><span>Los cuatro estilos que se compararon antes de elegir el Tablero.</span></a>
+    </div>
+
+    <div class="nota"><b>Cómo funciona esta demo:</b> no tiene servidor. Las noticias se actualizan solas cada 30 minutos. Lo que cambies en el panel se guarda solo en tu navegador y se ve en las pantallas que abras desde ese mismo navegador. En una instalación real, el panel pide clave y los cambios llegan a todas las TVs en segundos.</div>
+
+    <h2>Qué resuelve</h2>
+    <div class="puntos">
+      <div><b>Información que se actualiza sola</b>Noticias por RSS de los medios que elijas, siempre con la fuente, la fecha y un QR a la nota original.</div>
+      <div><b>Tus avisos, donde y cuando quieras</b>Promociones, avisos de RR. HH. o menús con imagen y QR, por fecha, franja horaria y pantalla.</div>
+      <div><b>Una pantalla distinta para cada lugar</b>Cada TV tiene su propia plantilla: tablero, pantalla completa, cuadrícula o vertical tipo tótem.</div>
+      <div><b>No se apaga si se corta internet</b>Se instala en la red de la empresa y sigue mostrando lo último que tenía, con aviso en pantalla.</div>
+      <div><b>Mensaje urgente</b>Un aviso que tapa todas las pantallas al instante: simulacros, emergencias, cortes de servicio.</div>
+      <div><b>Con tu marca</b>Nombre, logo y color de la empresa en todas las pantallas.</div>
+    </div>
+  </main>
+
+  <footer>© 2026 IO Consulting · <a href="https://ioconsulting.com.ar/">ioconsulting.com.ar</a> · <a href="mailto:contacto@ioconsulting.com.ar">contacto@ioconsulting.com.ar</a></footer>
+
+<script>
+  // escala la vista previa de 1920×1080 al ancho disponible
+  const v = document.getElementById("vista");
+  const ajustar = () => (v.querySelector("iframe").style.transform = `scale(${v.clientWidth / 1920})`);
+  new ResizeObserver(ajustar).observe(v);
+</script>
+</body>
+</html>

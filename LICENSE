@@ -1,0 +1,117 @@
+Copyright (c) 2026 Gonzalo Nicolás Bravo (CUIT 20-31625165-0) — IO Consulting (https://ioconsulting.com.ar)
+Todos los derechos reservados. / All rights reserved.
+
+==============================================================================
+ESPAÑOL
+==============================================================================
+
+1. TITULARIDAD
+El código fuente, el código compilado, los diseños, textos, imágenes y demás
+contenidos de este repositorio (en adelante, el "Software") son obra original de
+Gonzalo Nicolás Bravo (CUIT 20-31625165-0) y están protegidos por la Ley 11.723 de Propiedad Intelectual
+de la República Argentina, sus modificatorias, y los tratados internacionales
+aplicables, incluido el Convenio de Berna.
+
+2. ESTO NO ES SOFTWARE LIBRE NI DE CÓDIGO ABIERTO
+No se otorga ninguna licencia ni derecho sobre el Software, ya sea en forma
+expresa, implícita o de cualquier otro modo. Salvo autorización previa, expresa
+y por escrito del titular, queda prohibido:
+  a) copiar, descargar o clonar el Software, total o parcialmente, fuera de lo
+     previsto en el punto 3;
+  b) modificarlo, traducirlo, adaptarlo o crear obras derivadas a partir de él;
+  c) usarlo, integrarlo o reutilizar cualquier parte en otros proyectos, tanto
+     personales como comerciales;
+  d) distribuirlo, publicarlo, alojarlo, sublicenciarlo, venderlo, alquilarlo u
+     ofrecerlo como servicio a terceros;
+  e) utilizarlo para entrenar, ajustar o evaluar modelos de inteligencia
+     artificial;
+  f) suprimir, ocultar o alterar este aviso.
+
+3. ALCANCE DE LA VISIBILIDAD PÚBLICA
+Este repositorio es público con el único fin de publicar una demostración
+mediante GitHub Pages. Esa visibilidad no implica cesión, licencia ni renuncia
+de derecho alguno. Lo único permitido es:
+  (i)  ver el sitio publicado en un navegador web; y
+  (ii) lo que los Términos de Servicio de GitHub otorgan a sus usuarios sobre
+       repositorios públicos (ver el repositorio y bifurcarlo dentro de la
+       plataforma GitHub). Esto no habilita ningún uso del Software fuera de
+       esa plataforma.
+
+4. COMPONENTES DE TERCEROS
+Las bibliotecas, tipografías y otros componentes de terceros incluidos en el
+Software siguen sujetos a sus propias licencias. Respecto de esos componentes,
+esas licencias prevalecen sobre el presente aviso.
+
+5. INFRACCIONES
+El uso no autorizado del Software constituye una infracción a los derechos de
+autor del titular y podrá dar lugar a acciones civiles y penales, de acuerdo con
+los artículos 71, 72 y concordantes de la Ley 11.723. Esto no excluye las
+solicitudes de baja ante plataformas y proveedores de alojamiento, incluidas
+las notificaciones bajo la DMCA.
+
+6. AUTORIZACIONES
+Para solicitar permisos de uso o una licencia comercial, escribir a
+contacto@ioconsulting.com.ar.
+
+7. SIN GARANTÍA
+El Software se ofrece "TAL CUAL", sin garantía de ningún tipo. En ningún caso el
+titular será responsable por daños derivados del uso del Software, autorizado o
+no.
+
+==============================================================================
+ENGLISH
+==============================================================================
+
+1. OWNERSHIP
+The source code, compiled code, designs, texts, images and all other content in
+this repository (the "Software") are the original work of Gonzalo Nicolás Bravo (Argentine tax ID CUIT 20-31625165-0). They are
+protected by Argentine Copyright Law No. 11,723, as amended, and by applicable
+international treaties, including the Berne Convention.
+
+2. NOT FREE OR OPEN SOURCE SOFTWARE
+No license or right in the Software is granted, whether express, implied or
+otherwise. Without the owner's prior, express written permission, you may not:
+  a) copy, download or clone the Software, in whole or in part, except as
+     provided in section 3;
+  b) modify, translate or adapt the Software, or create derivative works
+     based on it;
+  c) use, integrate or reuse any part of it in other projects, whether
+     personal or commercial;
+  d) distribute, publish, host, sublicense, sell or rent the Software, or offer
+     it as a service to third parties;
+  e) use it to train, fine-tune or evaluate artificial intelligence models;
+  f) remove, hide or alter this notice.
+
+3. SCOPE OF PUBLIC VISIBILITY
+This repository is public solely to publish a demonstration through GitHub
+Pages. Its visibility does not assign, license or waive any right. The only
+uses permitted are:
+  (i)  viewing the published site in a web browser; and
+  (ii) the rights that GitHub's Terms of Service grant its users over public
+       repositories (viewing the repository and forking it within the GitHub
+       platform). This does not permit any use of the Software outside that
+       platform.
+
+4. THIRD-PARTY COMPONENTS
+Third-party libraries, fonts and other components included in the Software
+remain subject to their own licenses. For those components, those licenses
+prevail over this notice.
+
+5. INFRINGEMENT
+Unauthorized use of the Software infringes the owner's copyright and may result
+in civil and criminal action under Sections 71, 72 and related provisions of
+Argentine Law No. 11,723. This does not exclude takedown requests to platforms
+and hosting providers, including notices under the DMCA.
+
+6. PERMISSIONS
+To request permission or a commercial license, write to
+contacto@ioconsulting.com.ar.
+
+7. NO WARRANTY
+The Software is provided "AS IS", without warranty of any kind. In no event
+shall the owner be liable for any damages arising from any use of the
+Software, whether authorized or not.
+
+------------------------------------------------------------------------------
+Si existiera alguna discrepancia entre ambas versiones, prevalece la versión en
+español. / In case of any discrepancy, the Spanish version prevails.

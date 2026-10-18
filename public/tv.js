@@ -2,15 +2,21 @@
 // Caché ante cortes, en dos capas:
 //   1) copia en localStorage de la última respuesta (sirve aunque se caiga el servidor)
 //   2) service worker que guarda la página, las imágenes y la última respuesta (solo en localhost o https)
-import { PLANTILLAS } from "/plantillas.js";
+import { PLANTILLAS } from "./plantillas.js";
+import { respuestaPantalla } from "./logica.js";
+import { ESTATICO, datosBase, configDemo, CLAVE_DEMO } from "./demo.js";
 
-const PANTALLA = (location.pathname.split("/")[2] || "").toLowerCase();
+// La ruta se lee relativa a <base>: "tv/<pantalla>" tanto con el servidor como en GitHub Pages
+const RAIZ = new URL(document.baseURI).pathname;
+const PANTALLA = (location.pathname.slice(RAIZ.length).split("/")[1] || "").toLowerCase();
 const CLAVE_COPIA = "io-display:ultima:" + PANTALLA;
 // ?vista=1 es la vista previa del admin: no cuenta como TV conectada
 const EXTRA = new URLSearchParams(location.search).has("vista") ? "&vista=1" : "";
 const CONSULTA_MS = 20 * 1000; // cada cuánto pregunta si cambió algo (incluye el mensaje urgente)
 const $ = (id) => document.getElementById(id);
 const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// imágenes subidas: "/medios/x" se resuelve contra <base> (en la demo también pueden ser data:)
+const medio = (u) => (u && u.startsWith("/medios/") ? new URL(u.slice(1), document.baseURI).href : u);
 
 let datos = null;
 let firmaPlantilla = "";
@@ -121,7 +127,8 @@ function htmlNoticia(n) {
   </article>`;
 }
 
-function htmlAviso(a, marca) {
+function htmlAviso(aviso, marca) {
+  const a = { ...aviso, imagen: medio(aviso.imagen) };
   if (a.formato === "afiche" && a.imagen) {
     return `<article class="afiche">
       <div class="fondo" style="background-image:url('${esc(a.imagen)}')"></div>
@@ -253,8 +260,8 @@ function construir(d) {
     const tipo = d.pantalla.zonas[k];
     if (!["mixto", "noticias", "avisos"].includes(tipo)) return;
     const esPrincipal = k === "principal" || k === "z1";
-    // en la cuadrícula cada zona arranca en otro punto para no mostrar lo mismo a la vez
-    controladores.push(rotador(el(k), tipo, n * 3, esPrincipal ? (a, s, ms) => seguidores.forEach((f) => f.alCambiar(a, s, ms)) : null));
+    // en la cuadrícula cada zona arranca en otro punto (su número) para no mostrar lo mismo a la vez
+    controladores.push(rotador(el(k), tipo, n, esPrincipal ? (a, s, ms) => seguidores.forEach((f) => f.alCambiar(a, s, ms)) : null));
   });
 }
 
@@ -271,9 +278,10 @@ function pintarMarca(m) {
   $("nombre").textContent = m.nombre;
   document.title = m.nombre;
   const actual = $("marca").querySelector("img, svg");
-  if (m.logo && !(actual.tagName === "IMG" && actual.getAttribute("src") === m.logo)) {
+  const logo = medio(m.logo);
+  if (logo && !(actual.tagName === "IMG" && actual.getAttribute("src") === logo)) {
     const img = document.createElement("img");
-    img.src = m.logo;
+    img.src = logo;
     img.alt = "";
     actual.replaceWith(img);
   }
@@ -324,9 +332,22 @@ function aplicar(nuevos) {
   controladores.forEach((c) => c.actualizar && c.actualizar(datos));
 }
 
+const urlPantalla = () => new URL(`api/pantalla?p=${encodeURIComponent(PANTALLA)}${EXTRA}`, document.baseURI);
+
+// Demo estática: misma respuesta que daría el servidor, calculada en el navegador
+async function respuestaDemo() {
+  const b = await datosBase();
+  return respuestaPantalla(configDemo(b), b.cache, PANTALLA);
+}
+
 async function consultar() {
   try {
-    const r = await fetch(`/api/pantalla?p=${encodeURIComponent(PANTALLA)}${EXTRA}`, { cache: "no-store" });
+    if (ESTATICO) {
+      servidorOk = true;
+      copiaDe = null;
+      return aplicar(await respuestaDemo());
+    }
+    const r = await fetch(urlPantalla(), { cache: "no-store" });
     if (!r.ok) throw new Error(r.status);
     const nuevos = await r.json();
     if (r.headers.get("X-Copia")) {
@@ -371,15 +392,17 @@ setInterval(reloj, 1000);
 
 consultar();
 setInterval(consultar, CONSULTA_MS);
+// en la demo, un cambio guardado en el admin (otra pestaña del mismo navegador) se ve al instante
+if (ESTATICO) addEventListener("storage", (e) => e.key === CLAVE_DEMO && consultar());
 
 // Recarga diaria para no acumular memoria, solo si el servidor responde
 // (si no responde, recargar dejaría la TV en blanco donde no hay service worker).
 setInterval(async () => {
   if (performance.now() < 24 * 3600 * 1000) return;
   try {
-    const r = await fetch(`/api/pantalla?p=${encodeURIComponent(PANTALLA)}`, { cache: "no-store" });
+    const r = await fetch(ESTATICO ? new URL("datos.json", document.baseURI) : urlPantalla(), { cache: "no-store" });
     if (r.ok && !r.headers.get("X-Copia")) location.reload();
   } catch {}
 }, 10 * 60 * 1000);
 
-if ("serviceWorker" in navigator && isSecureContext) navigator.serviceWorker.register("/sw.js").catch(() => {});
+if (!ESTATICO && "serviceWorker" in navigator && isSecureContext) navigator.serviceWorker.register("sw.js").catch(() => {});

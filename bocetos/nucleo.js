@@ -1,6 +1,7 @@
 // Núcleo compartido de los bocetos de estilo (los 4 diseños que se compararon antes de elegir el Tablero).
 // Cada boceto solo dibuja; los datos salen de acá.
 //   - Servido por IO Display (/bocetos/...): usa /api/pantalla, la misma lista curada que ven las TVs.
+//   - En la demo de GitHub Pages: usa ../datos.json, que regenera GitHub Actions cada 30 minutos.
 //   - Abierto suelto desde el disco: baja los RSS por rss2json (respaldo parcial: no siempre responden todos).
 (function () {
   "use strict";
@@ -61,7 +62,7 @@
 
   // ---------- origen 1: el servidor de IO Display ----------
   async function desdeServidor() {
-    const r = await fetch("/api/pantalla?vista=1", { cache: "no-store" });
+    const r = await fetch("../api/pantalla?vista=1", { cache: "no-store" });
     if (!r.ok) throw new Error("servidor " + r.status);
     const d = await r.json();
     const rotacion = d.noticias.map((n) => ({ ...n, fecha: n.fecha ? new Date(n.fecha) : new Date(), sitio: sitioDe(n.link) }));
@@ -70,7 +71,18 @@
     return { recientes, rotacion, origen: "vivo", caidas, total: d.fuentes.length, fuentes: d.fuentes.map((f) => ({ id: f.id, nombre: f.nombre })) };
   }
 
-  // ---------- origen 2: rss2json (sin servidor) ----------
+  // ---------- origen 2: datos.json de la demo estática ----------
+  async function desdeEstatico() {
+    const r = await fetch("../datos.json", { cache: "no-store" });
+    if (!r.ok) throw new Error("datos.json " + r.status);
+    const { config, cache } = await r.json();
+    const activas = config.fuentes.filter((f) => f.activa);
+    const notas = activas.flatMap((f) => (cache[f.id]?.items || []).map((n) => ({ ...n, fuente: f.nombre, fecha: n.fecha ? new Date(n.fecha) : new Date(), sitio: sitioDe(n.link) })));
+    const caidas = activas.filter((f) => !cache[f.id]?.ok).length;
+    return { ...ordenar(notas), origen: "vivo", caidas, total: activas.length, fuentes: activas.map((f) => ({ id: f.id, nombre: f.nombre })) };
+  }
+
+  // ---------- origen 3: rss2json (abierto suelto, sin servidor) ----------
   function armar(fuente, it) {
     const fecha = it.pubDate ? new Date(it.pubDate.replace(" ", "T") + "Z") : new Date();
     const titulo = textoPlano(it.title);
@@ -116,7 +128,7 @@
   };
 
   async function cargar() {
-    for (const origen of [desdeServidor, desdeRss2json]) {
+    for (const origen of [desdeServidor, desdeEstatico, desdeRss2json]) {
       try {
         const d = await origen();
         guardarCache(d);

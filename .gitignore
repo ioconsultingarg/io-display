@@ -1,5 +1,7 @@
 # Datos locales: configuración elegida en el admin, caché de feeds y clave
 data/
+# Demo estática que arma el workflow de Pages
+_sitio/
 node_modules/
 *.log
 .DS_Store

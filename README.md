@@ -1,5 +1,14 @@
 # IO Display · Cartelería digital
 
+![Licencia: todos los derechos reservados](https://img.shields.io/badge/licencia-todos%20los%20derechos%20reservados-b91c1c) ![No es open source](https://img.shields.io/badge/open%20source-no-b91c1c)
+
+> [!CAUTION]
+> **© 2026 Gonzalo Nicolás Bravo — IO Consulting. Todos los derechos reservados.**
+>
+> Este repositorio es público **solo** para publicar la demo con GitHub Pages. **No es software libre ni de código abierto.** No tenés permiso para copiar, clonar, modificar, redistribuir ni reutilizar este código o sus partes en otros proyectos, personales o comerciales, ni para usarlo en el entrenamiento de modelos de IA. El uso no autorizado infringe la Ley 11.723 de Propiedad Intelectual (Argentina). Condiciones completas en [`LICENSE`](LICENSE). Para pedir permisos: contacto@ioconsulting.com.ar.
+>
+> **All rights reserved.** This repository is public **only** to serve a GitHub Pages demo. **It is not free or open source software.** You may not copy, clone, modify, redistribute or reuse this code or any part of it in other projects, personal or commercial, or use it to train AI models. Unauthorized use infringes copyright. Full terms in [`LICENSE`](LICENSE). To request permission: contacto@ioconsulting.com.ar.
+
 Cartelería digital para TVs encendidas las 24 horas: recepciones, comedores, salas de espera, locales.
 Cada pantalla combina **noticias por RSS**, siempre citando la fuente con un QR a la nota, y **avisos
 propios del cliente** (promociones, novedades, avisos de RR. HH., menús) con imagen, texto y QR.
@@ -11,6 +20,22 @@ internet.
 |---|---|---|
 | **Pantallas** | `/tv/<pantalla>` | Lo que se ve en cada TV. No tiene controles ni se puede manejar: rota sola. |
 | **Administración** | `/admin` | Con clave. Desde acá se decide qué se ve, en qué pantalla y cómo. |
+
+## Demo
+
+- Entrada: `https://ioconsultingarg.github.io/io-display/`
+- Pantallas: `.../io-display/tv/principal/` (Tablero) y `.../io-display/tv/comedor/` (cuadrícula 2×2)
+- Panel de administración, de acceso libre (no publica nada): `.../io-display/admin/`
+- Bocetos de estilo: `.../io-display/bocetos/`
+
+La demo es estática y no tiene servidor. El workflow `.github/workflows/pages.yml` la arma con
+`npm run sitio`: corre los tests, baja las noticias, genera `datos.json` con el contenido de `ejemplo/` y la
+publica. Se repite en cada push y cada 30 minutos, así las noticias están al día. En la demo, lo que se
+cambia en el panel se guarda en el navegador de quien la prueba (`public/demo.js`) y se ve en las pantallas
+abiertas desde ese mismo navegador.
+
+GitHub pausa los workflows programados después de 60 días sin actividad en el repo. Si las noticias de la
+demo dejan de actualizarse, se reactiva desde la pestaña Actions.
 
 ## Cómo se usa
 
@@ -103,13 +128,16 @@ src/almacen.mjs     configuración, caché, vigencia de avisos y armado de cada 
 src/medios.mjs      imágenes subidas: validación por contenido, guardado y limpieza
 src/auth.mjs        clave del admin, sesiones y límite de intentos
 public/plantillas.js  plantillas y zonas (las usan el servidor, el admin y las TVs)
+public/logica.js    qué ve cada pantalla (la comparten el servidor y la demo estática)
+public/demo.js      modo demo sin servidor (GitHub Pages)
 public/tv.*         pantalla de las TVs
 public/admin.*      panel de administración
 public/sw.js        service worker (copia para cortes)
 public/vendor/      qrcode-generator (MIT, Kazuhiko Arase)
 bocetos/            los 4 estilos que se compararon, con su galería (/bocetos/)
 ejemplo/            contenido de demo (npm run ejemplo)
-scripts/            cargar-ejemplo.mjs
+demo/               portada de la demo en GitHub Pages
+scripts/            cargar-ejemplo.mjs, construir-sitio.mjs (arma la demo en _sitio/)
 data/               config, caché, imágenes y clave de cada instalación (no se sube al repo)
 test/               npm test
 ```

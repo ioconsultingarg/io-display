@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Administración · IO Display</title>
+<base href="/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
@@ -124,6 +125,8 @@
   .badge.o { border-color: var(--accent); color: #FCA5A5; }
   .badge.f { border-color: var(--aviso); color: #FCD34D; }
 
+  .banda-demo { background: #1c1a0b; border-bottom: 2px solid var(--aviso); color: #FDE68A; padding: 10px 16px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: 15px; }
+  .banda-demo b { color: #FCD34D; }
   .logo-previa { height: 48px; max-width: 200px; object-fit: contain; background: var(--card-2); border: 1px solid var(--border); padding: 4px; }
 
   .aviso-flotante { position: fixed; bottom: 20px; right: 20px; background: var(--fg); color: var(--bg); padding: 12px 18px; font-weight: 500; transform: translateY(150%); visibility: hidden; transition: transform .2s, visibility .2s; z-index: 10; max-width: calc(100vw - 40px); }
@@ -324,6 +327,6 @@
   </div>
 
   <div class="aviso-flotante" id="aviso" role="status" aria-live="polite"></div>
-<script type="module" src="/admin.js"></script>
+<script type="module" src="admin.js"></script>
 </body>
 </html>
