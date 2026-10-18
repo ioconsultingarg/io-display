@@ -1,15 +1,16 @@
-# IO Display · Pantalla de noticias IT
+# IO Display · Cartelería digital
 
-Pantalla para una TV encendida las 24 horas en un espacio común. Muestra noticias de informática que
-toma de RSS en español, una por vez, siempre citando la fuente: el medio, cuándo se publicó, el link y
-un QR para leer la nota completa en el celular.
+Cartelería digital para TVs encendidas las 24 horas: recepciones, comedores, salas de espera, locales.
+Cada pantalla combina **noticias por RSS**, siempre citando la fuente con un QR a la nota, y **avisos
+propios del cliente** (promociones, novedades, avisos de RR. HH., menús) con imagen, texto y QR.
 
-Tiene dos partes:
+Se instala uno por cliente, en una PC o mini PC de su red. Así sigue funcionando aunque se corte
+internet.
 
 | | Dirección | Para qué |
 |---|---|---|
-| **Pantalla** | `/tv` | La que se ve en la TV. No tiene controles ni se puede manejar: rota las noticias sola. |
-| **Administración** | `/admin` | Con clave. Desde acá se eligen las fuentes y las noticias que se ven. |
+| **Pantallas** | `/tv/<pantalla>` | Lo que se ve en cada TV. No tiene controles ni se puede manejar: rota sola. |
+| **Administración** | `/admin` | Con clave. Desde acá se decide qué se ve, en qué pantalla y cómo. |
 
 ## Cómo se usa
 
@@ -19,65 +20,85 @@ Requiere Node 18.17 o superior y no instala dependencias.
 npm start
 ```
 
-- TV: `http://<ip-de-la-pc>:8080/tv` (al arrancar, la consola muestra las direcciones de la red local)
 - Admin: `http://<ip-de-la-pc>:8080/admin`
+- Cada TV: la dirección que muestra el admin en **Pantallas** (por ejemplo `http://192.168.0.10:8080/tv/recepcion`)
 
 La primera vez se genera una clave de administración en `data/clave-admin.txt`. Para elegir otra, se
 arranca con la variable `ADMIN_CLAVE` (mínimo 8 caracteres).
 
-## Qué se puede elegir desde el admin
+## Qué se define desde el admin
 
-- **Fuentes**: prender o apagar cada medio, quitarlo o agregar uno nuevo. Al agregarlo se prueba el feed
-  antes de guardarlo.
-- **Noticias**: *destacar* una nota (sale primero y queda fija aunque el medio la saque de su feed) u
-  *ocultarla* (no sale más en la TV).
-- **Ajustes**: título de la pantalla, segundos por noticia, antigüedad máxima, notas por medio, palabras
-  a excluir y la opción de mostrar solo las destacadas.
+- **Pantallas**: una por TV, cada una con su dirección. El admin muestra si está en línea y una vista
+  previa en vivo.
+- **Plantilla (cuadrícula)** de cada pantalla, y qué muestra cada zona:
 
-La TV consulta al servidor cada minuto, así que los cambios se ven en menos de un minuto, sin tocarla.
+  | Plantilla | Zonas |
+  |---|---|
+  | Tablero | principal, columna lateral, barra inferior |
+  | Pantalla completa | principal |
+  | Principal con barra | principal, barra inferior |
+  | Cuadrícula 2×2 | cuatro zonas |
+  | Vertical (tótem) | principal, lista, barra inferior (para TVs paradas) |
+
+  Una zona grande puede mostrar noticias y avisos intercalados, solo noticias o solo avisos. La lateral
+  muestra "A continuación" (lo que viene en la principal), avisos o noticias. La barra muestra las
+  fuentes citadas o titulares que corren.
+- **Avisos propios**: título, texto, imagen subida y QR opcional. Tienen dos formatos: *tarjeta* (texto
+  con la imagen al costado) o *afiche* (la imagen sola, a toda la zona). Se pueden limitar a fechas, a una
+  franja horaria (también una que cruce la medianoche) y a ciertas pantallas.
+- **Noticias RSS**: fuentes (prender, apagar, agregar probando el feed antes), notas destacadas u
+  ocultas, palabras a excluir y antigüedad máxima.
+- **Marca**: nombre, logo y color de acento. El texto sobre el acento se ajusta solo para que tenga
+  contraste.
+- **Mensaje urgente**: tapa todas las pantallas hasta que se quita. Sirve para emergencias, simulacros o
+  cortes de servicio.
+
+Las TVs consultan al servidor cada 20 segundos, así que los cambios se ven enseguida, sin tocarlas.
 
 ## Qué pasa si se corta algo
 
 | Corte | Qué hace |
 |---|---|
-| Se cae un medio | El servidor sigue mostrando lo último que trajo de ese medio. En la TV, ese medio aparece con borde punteado. |
-| Se corta internet | El servidor sigue sirviendo su caché (`data/cache.json`), también si se reinicia sin conexión. |
-| Se cae el servidor o la red local | La TV sigue rotando con la última lista que recibió y avisa en rojo arriba. |
-| La TV recarga la página con el servidor caído | Con el service worker, la página arranca igual desde la copia guardada. Esto funciona solo en `localhost` o con https: es una regla del navegador. Por eso la TV no se recarga sola si el servidor no responde. |
-
-Una vez por día la pantalla se recarga para no acumular memoria, pero solo si el servidor responde.
+| Se cae un medio | El servidor sigue mostrando lo último que trajo de ese medio. |
+| Se corta internet | El servidor sigue sirviendo su caché (`data/cache.json`) y las imágenes subidas, que están en el propio equipo. También funciona si el equipo se reinicia sin conexión. |
+| Se cae el servidor o la red local | Cada TV sigue rotando con lo último que recibió y avisa en rojo arriba. |
+| La TV recarga la página con el servidor caído | Con el service worker, la página arranca igual desde la copia, con imágenes incluidas. Esto funciona solo en `localhost` o con https: es una regla del navegador. Por eso la TV no se recarga sola si el servidor no responde. |
 
 ## Estructura
 
 ```
-servidor.mjs        servidor HTTP: páginas, API de la TV y API del admin
-src/rss.mjs         descarga y lectura de RSS/Atom (sin dependencias)
-src/almacen.mjs     configuración, caché en disco y armado de la lista que se ve
+servidor.mjs        servidor HTTP: páginas, API de las TVs y API del admin
+src/rss.mjs         descarga y lectura de RSS/Atom
+src/almacen.mjs     configuración, caché, vigencia de avisos y armado de cada pantalla
+src/medios.mjs      imágenes subidas: validación por contenido, guardado y limpieza
 src/auth.mjs        clave del admin, sesiones y límite de intentos
-public/tv.*         pantalla de la TV
+public/plantillas.js  plantillas y zonas (las usan el servidor, el admin y las TVs)
+public/tv.*         pantalla de las TVs
 public/admin.*      panel de administración
-public/sw.js        service worker (copia de la pantalla para cortes)
+public/sw.js        service worker (copia para cortes)
 public/vendor/      qrcode-generator (MIT, Kazuhiko Arase)
-data/               config, caché y clave (no se sube al repo)
+data/               config, caché, imágenes y clave (no se sube al repo)
 test/               npm test
 ```
 
 ## Seguridad
 
-- La pantalla solo lee: `/api/pantalla` no recibe datos.
+- Las TVs solo leen: `/api/pantalla` no recibe datos.
 - El admin pide la clave. Usa una cookie `HttpOnly` y `SameSite=Strict`, y bloquea por 15 minutos después
   de 5 intentos fallidos.
+- Imágenes: hasta 8 MB, y el tipo (JPG, PNG, WebP o GIF) se valida por contenido. No se aceptan SVG.
+  Se guardan con nombre aleatorio, y las que ningún aviso usa se borran solas.
 - Solo se aceptan feeds en direcciones públicas: se bloquean `localhost` y las IP de la red interna,
   también si un feed redirige hacia ellas.
-- Hay headers CSP y `nosniff`, y la pantalla solo puede mostrarse embebida en el propio admin.
+- Hay headers CSP y `nosniff`, y las pantallas solo pueden mostrarse embebidas en el propio admin.
 - El servidor usa http. Si el admin se va a usar fuera de la red local, hay que ponerlo detrás de https
   (por ejemplo, un proxy reverso o Cloudflare Tunnel).
 
-## Dejarlo funcionando en la TV
+## Instalación en el cliente
 
 1. En una PC o mini PC de la red, dejar `npm start` corriendo como servicio (Programador de tareas de
    Windows con "al iniciar", o `pm2`).
-2. En la TV, o en el dispositivo conectado a ella, abrir `/tv` en modo quiosco. Por ejemplo, en Chrome:
-   `chrome --kiosk http://<ip>:8080/tv`.
-3. Si el navegador de la TV corre en la misma PC que el servidor, conviene usar
-   `http://localhost:8080/tv`: así también funciona la copia del service worker.
+2. En cada TV, o en el dispositivo conectado a ella, abrir su dirección en modo quiosco. Por ejemplo, en
+   Chrome: `chrome --kiosk http://<ip>:8080/tv/recepcion`.
+3. Si el navegador de la TV corre en la misma PC que el servidor, conviene usar `http://localhost:8080/...`:
+   así también funciona la copia del service worker.

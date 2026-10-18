@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Informática hoy</title>
+<title>IO Display</title>
 <!-- Pantalla para la TV. No tiene controles: lo que se muestra se decide en /admin. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
@@ -22,86 +22,148 @@
     --color-border: #334155;
     --ok: #22C55E;
     --aviso: #F59E0B;
+    --barra-sup: 5vw;
+    --barra-inf: 4.2vw;
   }
   * { box-sizing: border-box; margin: 0; }
   html, body { height: 100%; overflow: hidden; cursor: none; user-select: none; -webkit-user-select: none; }
-  body { background: var(--color-background); color: var(--color-foreground); font-family: "Roboto", system-ui, sans-serif; display: grid; grid-template-rows: 5vw 1fr 4.2vw; pointer-events: none; }
+  body { background: var(--color-background); color: var(--color-foreground); font-family: "Roboto", system-ui, sans-serif; display: grid; grid-template-rows: var(--barra-sup) 1fr; pointer-events: none; }
   .mono { font-family: "Roboto Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  body.vertical { --barra-sup: 9vw; --barra-inf: 7.5vw; }
 
-  .barra { display: grid; grid-template-columns: auto 1fr auto auto; align-items: stretch; border-bottom: 2px solid var(--color-border); }
-  .marca { background: var(--color-accent); color: var(--color-on-accent); display: flex; align-items: center; gap: .8vw; padding: 0 2vw; font-weight: 700; font-size: 1.35vw; letter-spacing: .06em; text-transform: uppercase; }
-  .marca svg { width: 1.7vw; height: 1.7vw; }
-  .estado { display: flex; align-items: center; gap: .7vw; padding: 0 2vw; color: var(--color-muted-foreground); font-size: 1vw; }
-  .punto { width: .7vw; height: .7vw; border-radius: 50%; background: var(--ok); flex: none; }
+  /* ---------- barra superior ---------- */
+  .barra { display: grid; grid-template-columns: auto 1fr auto auto; align-items: stretch; border-bottom: 2px solid var(--color-border); container-type: size; }
+  .marca { background: var(--color-accent); color: var(--color-on-accent); display: flex; align-items: center; gap: 16cqh; padding: 0 40cqh; font-weight: 700; font-size: 27cqh; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .marca svg, .marca img { height: 46cqh; width: auto; max-width: 30cqw; object-fit: contain; }
+  .estado { display: flex; align-items: center; gap: 14cqh; padding: 0 40cqh; color: var(--color-muted-foreground); font-size: 20cqh; min-width: 0; }
+  .estado span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .punto { width: 14cqh; height: 14cqh; border-radius: 50%; background: var(--ok); flex: none; }
   .punto.aviso { background: var(--aviso); }
   .punto.error { background: var(--color-accent); }
-  .fecha { display: flex; align-items: center; padding: 0 2vw; color: var(--color-muted-foreground); font-size: 1.1vw; border-left: 2px solid var(--color-border); }
-  .hora { display: flex; align-items: center; padding: 0 2vw; font-size: 2.4vw; font-weight: 500; background: var(--color-secondary); }
+  .fecha { display: flex; align-items: center; padding: 0 40cqh; color: var(--color-muted-foreground); font-size: 22cqh; border-left: 2px solid var(--color-border); white-space: nowrap; }
+  .hora { display: flex; align-items: center; padding: 0 40cqh; font-size: 48cqh; font-weight: 500; background: var(--color-secondary); }
+  body.vertical .fecha { display: none; }
 
-  main { display: grid; grid-template-columns: 1fr 30vw; min-height: 0; }
-  .actual { padding: 2.4vw 3vw 2vw; display: grid; grid-template-columns: 1fr 27vw; grid-template-rows: auto auto 1fr auto; column-gap: 2.6vw; row-gap: 1.4vw; min-height: 0; }
-  .etiqueta { grid-column: 1 / -1; display: flex; gap: 1vw; align-items: center; }
-  .chip { background: var(--color-accent); color: var(--color-on-accent); font-weight: 700; font-size: 1.05vw; padding: .45vw 1vw; text-transform: uppercase; letter-spacing: .05em; }
+  /* ---------- plantillas (cuadrícula de zonas) ---------- */
+  #zonas { display: grid; min-height: 0; }
+  .p-tablero #zonas { grid-template: "principal lateral" 1fr "barra barra" var(--barra-inf) / 1fr 30vw; }
+  .p-completa #zonas { grid-template: "principal" 1fr / 1fr; }
+  .p-principal-barra #zonas { grid-template: "principal" 1fr "barra" var(--barra-inf) / 1fr; }
+  .p-cuadricula #zonas { grid-template: "z1 z2" 1fr "z3 z4" 1fr / 1fr 1fr; gap: 2px; background: var(--color-border); }
+  .p-vertical #zonas { grid-template: "principal" 58fr "lateral" 42fr "barra" var(--barra-inf) / 1fr; }
+  .zona { container-type: size; min-height: 0; min-width: 0; overflow: hidden; position: relative; background: var(--color-background); }
+  .z-lateral { background: var(--color-primary); border-left: 2px solid var(--color-border); }
+  .p-vertical .z-lateral { border-left: 0; border-top: 2px solid var(--color-border); }
+  .z-barra { border-top: 2px solid var(--color-border); }
+
+  /* ---------- tarjeta de noticia o aviso (se adapta al tamaño de su zona) ---------- */
+  .tarjeta { position: absolute; inset: 0; padding: 4cqmin 4.5cqmin; display: grid; grid-template-columns: 1fr 38cqw; grid-template-rows: auto auto 1fr auto; column-gap: 3.6cqw; row-gap: 2.2cqmin; }
+  .etiqueta { grid-column: 1 / -1; display: flex; gap: 1.5cqmin; align-items: center; flex-wrap: wrap; }
+  .chip { background: var(--color-accent); color: var(--color-on-accent); font-weight: 700; font-size: clamp(10px, 2.2cqmin, 40px); padding: .5em 1em; text-transform: uppercase; letter-spacing: .05em; }
   .chip.gris { background: var(--color-secondary); color: var(--color-foreground); font-weight: 500; }
-  .chip.destacada { background: var(--color-foreground); color: var(--color-background); }
-  h1 { grid-column: 1 / -1; font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 3.6vw; line-height: 1.08; letter-spacing: -.01em; text-wrap: balance; align-self: start; }
-  .resumen { grid-column: 1; grid-row: 3; align-self: start; font-size: 1.5vw; line-height: 1.55; color: #CBD5E1; }
-  .lado { grid-row: 3 / 5; grid-column: 2; min-height: 0; align-self: end; }
-  .img { aspect-ratio: 16/10; background: var(--color-muted); overflow: hidden; border: 2px solid var(--color-border); }
-  .img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .cita { grid-column: 1; grid-row: 4; display: grid; grid-template-columns: 7.5vw 1fr; gap: 1.4vw; align-items: center; background: var(--color-card); border: 2px solid var(--color-border); padding: 1.1vw; }
-  .cita .qr { background: #fff; padding: .3vw; aspect-ratio: 1; }
-  .cita .qr svg { display: block; }
-  .cita dt { color: var(--color-muted-foreground); font-size: .85vw; text-transform: uppercase; letter-spacing: .1em; }
-  .cita dd { font-size: 1.5vw; font-weight: 700; margin: .1vw 0 .5vw; }
-  .cita .url { font-size: .95vw; color: var(--color-muted-foreground); word-break: break-all; }
-  .cita .leer { font-size: .85vw; color: var(--color-muted-foreground); margin-top: .4vw; }
-
-  .cola { background: var(--color-primary); border-left: 2px solid var(--color-border); padding: 2.2vw 1.8vw; display: flex; flex-direction: column; gap: 1vw; min-height: 0; overflow: hidden; }
-  .cola h2 { font-size: 1vw; letter-spacing: .14em; text-transform: uppercase; color: var(--color-muted-foreground); font-weight: 500; }
-  #cola { display: flex; flex-direction: column; gap: 1vw; }
-  .item { background: var(--color-card); border: 2px solid var(--color-border); padding: 1vw 1.1vw; }
-  .item .q { display: flex; justify-content: space-between; color: var(--color-muted-foreground); font-size: .85vw; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .45vw; }
-  .item .q b { color: var(--color-accent); font-weight: 700; }
-  .item p { font-family: "Newsreader", Georgia, serif; font-weight: 500; font-size: 1.35vw; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-
-  footer { border-top: 2px solid var(--color-border); display: grid; grid-template-columns: auto 1fr; align-items: center; position: relative; }
-  footer .t { padding: 0 2vw; font-size: .85vw; letter-spacing: .14em; text-transform: uppercase; color: var(--color-muted-foreground); }
-  .fuentes { display: flex; gap: .6vw; overflow: hidden; }
-  .fuentes span { border: 2px solid var(--color-border); padding: .35vw .8vw; font-size: .95vw; white-space: nowrap; transition: background .2s, color .2s; }
-  .fuentes span.caida { color: var(--color-muted-foreground); border-style: dashed; }
-  .fuentes span.on { background: var(--color-foreground); color: var(--color-background); border-color: var(--color-foreground); border-style: solid; font-weight: 700; }
-  .progreso { position: absolute; top: -2px; left: 0; right: 0; height: 4px; }
+  .chip.claro { background: var(--color-foreground); color: var(--color-background); }
+  .titulo { grid-column: 1 / -1; font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: min(5.1cqw, 8.4cqh); line-height: 1.08; letter-spacing: -.01em; text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .texto { grid-column: 1; grid-row: 3; align-self: start; font-size: min(2.1cqw, 3.5cqh); line-height: 1.55; color: #CBD5E1; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+  .foto { grid-column: 2; grid-row: 3 / 5; align-self: end; aspect-ratio: 16/10; background: var(--color-muted); overflow: hidden; border: 2px solid var(--color-border); }
+  .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cita { grid-column: 1; grid-row: 4; display: grid; grid-template-columns: min(10.5cqw, 17cqh) 1fr; gap: 2cqw; align-items: center; background: var(--color-card); border: 2px solid var(--color-border); padding: 1.5cqmin; }
+  .qr { background: #fff; padding: .4cqmin; aspect-ratio: 1; }
+  .qr svg { display: block; width: 100%; height: 100%; }
+  .cita dt { color: var(--color-muted-foreground); font-size: clamp(9px, 1.4cqmin, 26px); text-transform: uppercase; letter-spacing: .1em; }
+  .cita dd { font-size: clamp(12px, 2.6cqmin, 46px); font-weight: 700; margin: .1em 0 .3em; }
+  .cita .url, .cita .leer { font-size: clamp(9px, 1.5cqmin, 26px); color: var(--color-muted-foreground); word-break: break-all; }
+  .cita .leer { margin-top: .4em; word-break: normal; }
+  .progreso { position: absolute; left: 0; right: 0; bottom: 0; height: max(3px, .6cqmin); }
   .progreso i { display: block; height: 100%; background: var(--color-accent); transform-origin: left; transform: scaleX(0); }
 
-  .vacio { grid-column: 1 / -1; grid-row: 1 / -1; align-self: center; text-align: center; color: var(--color-muted-foreground); }
-  .vacio h1 { color: var(--color-foreground); margin-bottom: 1vw; }
-  .vacio p { font-size: 1.4vw; }
+  /* sin foto: el texto usa todo el ancho */
+  .tarjeta.sin-foto .texto, .tarjeta.sin-foto .cita { grid-column: 1 / -1; }
+  .tarjeta.sin-foto .cita { max-width: 70cqw; }
+  .tarjeta.sin-foto .foto { display: none; }
+  /* zonas angostas o verticales: todo apilado */
+  @container (max-aspect-ratio: 5/4) {
+    .tarjeta { grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto; }
+    .titulo { font-size: min(8.2cqw, 6cqh); }
+    .texto { grid-column: 1; grid-row: 4; font-size: min(3.6cqw, 2.8cqh); -webkit-line-clamp: 4; }
+    .foto { grid-column: 1; grid-row: 3; align-self: stretch; max-height: 34cqh; aspect-ratio: auto; }
+    .cita, .tarjeta.sin-foto .cita { grid-column: 1; grid-row: 5; grid-template-columns: min(20cqw, 14cqh) 1fr; max-width: none; }
+  }
+  /* zonas bajas (cuadrícula): sin resumen, foto al costado */
+  @container (max-height: 460px) and (min-aspect-ratio: 5/4) {
+    .tarjeta { grid-template-rows: auto 1fr auto; }
+    .texto { display: none; }
+    .titulo { grid-column: 1; grid-row: 2; -webkit-line-clamp: 4; font-size: min(4.6cqw, 9.5cqh); }
+    .tarjeta.sin-foto .titulo { grid-column: 1 / -1; }
+    .foto { grid-row: 2 / 4; }
+    .cita { grid-row: 3; grid-template-columns: min(10cqw, 22cqh) 1fr; }
+  }
+
+  /* aviso tipo afiche: la imagen sola, completa */
+  .afiche { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; background: #000; }
+  .afiche .fondo { position: absolute; inset: -5%; background-size: cover; background-position: center; filter: blur(40px) brightness(.45); }
+  .afiche img { position: relative; max-width: 100%; max-height: 100%; object-fit: contain; }
+  .afiche .qr-esquina { position: absolute; right: 2.5cqmin; bottom: 2.5cqmin; width: min(14cqw, 20cqh); background: #fff; padding: .6cqmin; }
+  .afiche .qr-esquina svg { display: block; }
+
+  /* ---------- cola (a continuación) ---------- */
+  .cola { position: absolute; inset: 0; padding: 4cqmin 3.5cqmin; display: flex; flex-direction: column; gap: 2.2cqmin; }
+  .cola h2 { font-size: clamp(10px, 2.9cqmin, 32px); letter-spacing: .14em; text-transform: uppercase; color: var(--color-muted-foreground); font-weight: 500; }
+  .cola .lista { display: flex; flex-direction: column; gap: 2.2cqmin; min-height: 0; }
+  .p-vertical .cola .lista { display: grid; grid-template-columns: 1fr 1fr; }
+  .item { background: var(--color-card); border: 2px solid var(--color-border); padding: 2cqmin 2.4cqmin; }
+  .item .q { display: flex; justify-content: space-between; gap: 1em; color: var(--color-muted-foreground); font-size: clamp(9px, 2.8cqmin, 26px); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .5em; }
+  .item .q b { color: var(--color-accent); font-weight: 700; }
+  .item p { font-family: "Newsreader", Georgia, serif; font-weight: 500; font-size: clamp(12px, 4.5cqmin, 44px); line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ---------- barras ---------- */
+  .fuentes { position: absolute; inset: 0; display: grid; grid-template-columns: auto 1fr; align-items: center; }
+  .fuentes .t { padding: 0 2vw; font-size: 20cqh; letter-spacing: .14em; text-transform: uppercase; color: var(--color-muted-foreground); }
+  .fuentes .chips { display: flex; gap: .6vw; overflow: hidden; }
+  .fuentes .chips span { border: 2px solid var(--color-border); padding: .35em .8em; font-size: 22cqh; white-space: nowrap; }
+  .fuentes .chips span.caida { color: var(--color-muted-foreground); border-style: dashed; }
+  .fuentes .chips span.on { background: var(--color-foreground); color: var(--color-background); border-color: var(--color-foreground); border-style: solid; font-weight: 700; }
+  .fuentes .progreso { top: -2px; bottom: auto; height: 4px; }
+  .titulares { position: absolute; inset: 0; display: flex; align-items: center; overflow: hidden; }
+  .titulares .etq { background: var(--color-accent); color: var(--color-on-accent); height: 100%; display: flex; align-items: center; padding: 0 2vw; font-weight: 700; font-size: 22cqh; text-transform: uppercase; letter-spacing: .08em; flex: none; z-index: 1; }
+  .cinta { display: flex; white-space: nowrap; animation: correr var(--duracion, 240s) linear infinite; }
+  .cinta span { font-size: 30cqh; padding-right: 4vw; }
+  .cinta b { color: var(--color-accent); font-size: 22cqh; text-transform: uppercase; letter-spacing: .1em; margin-right: 1vw; }
+  @keyframes correr { to { transform: translateX(-50%); } }
+
+  .vacio { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; color: var(--color-muted-foreground); padding: 5cqmin; font-size: clamp(12px, 3cqmin, 36px); }
+  .vacio b { display: block; color: var(--color-foreground); font-family: "Newsreader", serif; font-size: 1.6em; margin-bottom: .4em; }
+
+  /* ---------- mensaje urgente ---------- */
+  #urgente { position: fixed; inset: 0; z-index: 50; display: none; place-content: center; text-align: center; padding: 6vw; background: #7F1D1D; color: #fff; }
+  #urgente.ver { display: grid; }
+  #urgente.ambar { background: #78350F; }
+  #urgente.azul { background: #1E3A8A; }
+  #urgente .rotulo { font-size: 1.6vw; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; opacity: .85; margin-bottom: 2vw; animation: titila 1.6s ease-in-out infinite; }
+  #urgente h1 { font-family: "Newsreader", serif; font-size: 6vw; line-height: 1.05; margin-bottom: 2vw; text-wrap: balance; }
+  #urgente p { font-size: 2.4vw; line-height: 1.4; max-width: 70vw; margin: 0 auto; text-wrap: pretty; white-space: pre-line; }
+  body.vertical #urgente .rotulo { font-size: 3vw; }
+  body.vertical #urgente h1 { font-size: 9vw; }
+  body.vertical #urgente p { font-size: 4vw; max-width: none; }
+  @keyframes titila { 50% { opacity: .4; } }
+  @media (prefers-reduced-motion: reduce) { .cinta, #urgente .rotulo { animation: none; } }
 </style>
 </head>
-<body>
+<body class="p-tablero">
   <div class="barra">
-    <div class="marca">
+    <div class="marca" id="marca">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      <span id="titulo">Informática hoy</span>
+      <span id="nombre">IO Display</span>
     </div>
     <div class="estado"><span class="punto" id="punto"></span><span id="estado">Conectando…</span></div>
     <div class="fecha" id="fecha"></div>
     <div class="hora mono" id="hora"></div>
   </div>
 
-  <main>
-    <section class="actual" id="actual"></section>
-    <aside class="cola"><h2>A continuación</h2><div id="cola"></div></aside>
-  </main>
+  <main id="zonas"></main>
 
-  <footer>
-    <div class="progreso"><i id="barra"></i></div>
-    <div class="t">Fuentes</div>
-    <div class="fuentes" id="fuentes"></div>
-  </footer>
+  <div id="urgente" role="alert"><div class="rotulo">Aviso importante</div><h1 id="urgente-titulo"></h1><p id="urgente-texto"></p></div>
 
 <script src="/vendor/qrcode.js"></script>
-<script src="/tv.js"></script>
+<script type="module" src="/tv.js"></script>
 </body>
 </html>

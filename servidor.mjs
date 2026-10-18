@@ -1,6 +1,6 @@
-// Pantalla de noticias IT — servidor (Node 18+, sin dependencias)
-//   /tv     pantalla para la TV: solo lectura, sin controles
-//   /admin  panel con clave para elegir fuentes y notas
+// IO Display — servidor de cartelería digital (Node 18+, sin dependencias)
+//   /tv/<pantalla>  lo que muestra cada TV: solo lectura, sin controles
+//   /admin          panel con clave: pantallas, plantillas, avisos, noticias RSS, marca
 // La vista previa del admin enmarca /tv: por eso se permite el mismo origen y nada más.
 // Uso: node servidor.mjs   (variables opcionales: PORT, ADMIN_CLAVE, DATA_DIR)
 import http from "node:http";
@@ -8,7 +8,8 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { networkInterfaces } from "node:os";
-import { Almacen } from "./src/almacen.mjs";
+import { Almacen, mediosEnUso } from "./src/almacen.mjs";
+import { Medios, MAX_BYTES } from "./src/medios.mjs";
 import { Auth } from "./src/auth.mjs";
 import { bajarFeed, parsearFeed, tituloDelFeed, urlPublicaValida } from "./src/rss.mjs";
 
@@ -23,8 +24,10 @@ const almacen = new Almacen(DATA);
 await almacen.iniciar();
 const auth = new Auth(DATA);
 const infoClave = await auth.iniciar();
+const medios = new Medios(DATA);
+await medios.iniciar();
 
-const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
+const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".jpg": "image/jpeg", ".webp": "image/webp", ".webmanifest": "application/manifest+json" };
 const SEGURIDAD = {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "no-referrer",
@@ -67,14 +70,37 @@ async function servirArchivo(res, ruta) {
 }
 
 const ipDe = (req) => req.socket.remoteAddress || "?";
+const direccionesRed = () => Object.values(networkInterfaces()).flat().filter((i) => i && i.family === "IPv4" && !i.internal).map((i) => i.address);
+
+async function leerBinario(req) {
+  const declarado = Number(req.headers["content-length"] || 0);
+  if (declarado > MAX_BYTES) throw Object.assign(new Error("La imagen supera los 8 MB"), { status: 413 });
+  let total = 0;
+  const partes = [];
+  for await (const p of req) {
+    total += p.length;
+    if (total > MAX_BYTES) throw Object.assign(new Error("La imagen supera los 8 MB"), { status: 413 });
+    partes.push(p);
+  }
+  return Buffer.concat(partes);
+}
 
 // ---------- API del admin (todas requieren sesión) ----------
 const admin = {
-  "GET /api/admin/estado": () => ({ config: almacen.config, fuentes: almacen.estadoFuentes(), notas: almacen.todasLasNotas(), pantalla: almacen.pantalla() }),
+  "GET /api/admin/estado": () => ({
+    config: almacen.config,
+    fuentes: almacen.estadoFuentes(),
+    notas: almacen.todasLasNotas(),
+    pantallas: almacen.estadoPantallas(),
+    pantalla: almacen.pantalla(almacen.config.pantallas[0].id, { registrar: false }),
+    red: direccionesRed().map((ip) => `http://${ip}:${PUERTO}`), // para armar la dirección de cada TV
+  }),
   "PUT /api/admin/config": async (req) => {
     const config = await almacen.guardarConfig(await leerJSON(req));
+    medios.limpiar(mediosEnUso(config)).catch(() => {});
     return { ok: true, config };
   },
+  "POST /api/admin/medios": async (req) => ({ ok: true, url: await medios.guardar(await leerBinario(req)) }),
   "POST /api/admin/refrescar": async () => {
     await almacen.refrescar();
     return { ok: true, fuentes: almacen.estadoFuentes() };
@@ -98,9 +124,15 @@ http
     const ruta = u.pathname;
     try {
       // --- públicas (TV) ---
-      if (req.method === "GET" && (ruta === "/" || ruta === "/tv" || ruta === "/tv/")) return servirArchivo(res, "tv.html");
+      if (req.method === "GET" && (ruta === "/" || /^\/tv(\/[a-z0-9-]*)?\/?$/.test(ruta))) return servirArchivo(res, "tv.html");
       if (req.method === "GET" && (ruta === "/admin" || ruta === "/admin/")) return servirArchivo(res, "admin.html");
-      if (req.method === "GET" && ruta === "/api/pantalla") return responder(res, 200, almacen.pantalla());
+      if (req.method === "GET" && ruta === "/api/pantalla") return responder(res, 200, almacen.pantalla(u.searchParams.get("p") || "", { registrar: !u.searchParams.has("vista") }));
+      if (req.method === "GET" && ruta.startsWith("/medios/")) {
+        const m = await medios.leer(ruta.slice(8));
+        if (!m) return responder(res, 404, "No encontrado");
+        res.writeHead(200, { ...SEGURIDAD, "Content-Type": m.tipo, "Cache-Control": "public, max-age=31536000, immutable" });
+        return res.end(m.cuerpo);
+      }
 
       // --- sesión ---
       if (req.method === "POST" && ruta === "/api/login") {
@@ -130,9 +162,9 @@ http
     }
   })
   .listen(PUERTO, "0.0.0.0", () => {
-    const ips = Object.values(networkInterfaces()).flat().filter((i) => i && i.family === "IPv4" && !i.internal).map((i) => i.address);
-    console.log(`Pantalla de noticias IT`);
-    console.log(`  TV:    http://localhost:${PUERTO}/tv` + ips.map((ip) => `  ·  http://${ip}:${PUERTO}/tv`).join(""));
+    const ips = direccionesRed();
+    console.log(`IO Display`);
+    console.log(`  TV:    http://localhost:${PUERTO}/tv/<pantalla>` + ips.map((ip) => `  ·  http://${ip}:${PUERTO}/tv/<pantalla>`).join(""));
     console.log(`  Admin: http://localhost:${PUERTO}/admin`);
     if (infoClave.generada) console.log(`  Se generó una clave de admin nueva en ${infoClave.ruta}`);
     else if (infoClave.ruta) console.log(`  Clave de admin: ver ${infoClave.ruta}`);
@@ -141,3 +173,4 @@ http
 // Primer refresco al arrancar (mientras tanto se sirve el caché en disco) y luego cada 10 minutos
 almacen.refrescar().catch((e) => console.error("refresco inicial:", e));
 setInterval(() => almacen.refrescar().catch((e) => console.error("refresco:", e)), REFRESCO_MS);
+setInterval(() => medios.limpiar(mediosEnUso(almacen.config)).catch(() => {}), 3600 * 1000);

@@ -3,7 +3,9 @@
 // o si se reinicia el equipo sin conexión.
 import { readFile, writeFile, rename, mkdir } from "node:fs/promises";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { bajarFeed, parsearFeed, urlPublicaValida, recortar } from "./rss.mjs";
+import { PLANTILLAS, zonasPorDefecto } from "../public/plantillas.js";
 
 export const FUENTES_POR_DEFECTO = [
   { id: "xataka", nombre: "Xataka", url: "https://www.xataka.com/feedburner.xml" },
@@ -17,7 +19,11 @@ export const FUENTES_POR_DEFECTO = [
 ].map((f) => ({ ...f, activa: true }));
 
 export const CONFIG_POR_DEFECTO = {
-  titulo: "Informática hoy",
+  marca: { nombre: "Informática hoy", acento: "#EF4444", logo: "" },
+  pantallas: [{ id: "principal", nombre: "Pantalla principal", plantilla: "tablero", zonas: zonasPorDefecto("tablero") }],
+  avisos: [], // contenido propio del cliente: imagen + textos, con vigencia y pantallas destino
+  urgente: { activo: false, titulo: "", texto: "", color: "rojo" }, // tapa todas las pantallas
+  intercalar: 3, // en zonas "mixto": un aviso cada N noticias
   fuentes: FUENTES_POR_DEFECTO,
   ocultas: [], // ids de notas que el admin sacó de la pantalla
   destacadas: [], // notas completas fijadas por el admin (sobreviven aunque el feed las rote)
@@ -28,7 +34,11 @@ export const CONFIG_POR_DEFECTO = {
   porFuente: 6,
 };
 
-const LIMITES = { fuentes: 30, ocultas: 1000, destacadas: 40, excluir: 60 };
+const LIMITES = { fuentes: 30, ocultas: 1000, destacadas: 40, excluir: 60, avisos: 100, pantallas: 30 };
+const RE_MEDIO = /^\/medios\/[a-f0-9]{24}\.(jpg|png|webp|gif)$/;
+const RE_FECHA = /^\d{4}-\d{2}-\d{2}$/;
+const RE_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+const slug = (s) => texto(s, 40).toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 const entero = (v, min, max, def) => {
   const n = Math.round(Number(v));
@@ -60,8 +70,59 @@ export function sanearConfig(c, previa = CONFIG_POR_DEFECTO) {
       fuente: texto(n.fuente, 40), fuenteId: texto(n.fuenteId, 40),
     }));
 
+  const m = c.marca || previa.marca || d.marca;
+  const marca = {
+    nombre: texto(m.nombre ?? c.titulo, 40) || d.marca.nombre, // "titulo" es el nombre de la versión anterior
+    acento: /^#[0-9a-f]{6}$/i.test(m.acento || "") ? m.acento : d.marca.acento,
+    logo: RE_MEDIO.test(m.logo || "") ? m.logo : "",
+  };
+
+  const idsP = new Set();
+  const pantallas = (Array.isArray(c.pantallas) ? c.pantallas : previa.pantallas || d.pantallas)
+    .slice(0, LIMITES.pantallas)
+    .map((p) => {
+      const plantilla = PLANTILLAS[p.plantilla] ? p.plantilla : "tablero";
+      const zonas = zonasPorDefecto(plantilla);
+      for (const [k, z] of Object.entries(PLANTILLAS[plantilla].zonas)) if (z.tipos.includes(p.zonas?.[k])) zonas[k] = p.zonas[k];
+      return { id: slug(p.id || p.nombre) || "pantalla", nombre: texto(p.nombre, 40) || "Pantalla", plantilla, zonas };
+    })
+    .filter((p) => !idsP.has(p.id) && idsP.add(p.id));
+  if (!pantallas.length) pantallas.push(structuredClone(d.pantallas[0]));
+
+  const idsA = new Set();
+  const avisos = (Array.isArray(c.avisos) ? c.avisos : previa.avisos || [])
+    .slice(0, LIMITES.avisos)
+    .map((a) => ({
+      id: texto(a.id, 30).replace(/[^a-z0-9-]/gi, "") || "a" + Math.random().toString(36).slice(2, 10),
+      titulo: texto(a.titulo, 120),
+      texto: texto(a.texto, 400),
+      imagen: RE_MEDIO.test(a.imagen || "") ? a.imagen : "",
+      link: /^https?:\/\//.test(a.link || "") ? texto(a.link, 1000) : "",
+      formato: a.formato === "afiche" ? "afiche" : "tarjeta", // afiche = la imagen sola a toda la zona
+      segundos: entero(a.segundos, 5, 120, 12),
+      desde: RE_FECHA.test(a.desde || "") ? a.desde : "",
+      hasta: RE_FECHA.test(a.hasta || "") ? a.hasta : "",
+      horaDesde: RE_HORA.test(a.horaDesde || "") ? a.horaDesde : "",
+      horaHasta: RE_HORA.test(a.horaHasta || "") ? a.horaHasta : "",
+      pantallas: (Array.isArray(a.pantallas) ? a.pantallas : []).filter((id) => idsP.has(id)), // vacío = todas
+      activo: a.activo !== false,
+    }))
+    .filter((a) => (a.titulo || a.imagen) && !idsA.has(a.id) && idsA.add(a.id));
+
+  const u = c.urgente || previa.urgente || d.urgente;
+  const urgente = {
+    activo: u.activo === true,
+    titulo: texto(u.titulo, 80),
+    texto: texto(u.texto, 300),
+    color: ["rojo", "ambar", "azul"].includes(u.color) ? u.color : "rojo",
+  };
+
   return {
-    titulo: texto(c.titulo ?? previa.titulo, 40) || d.titulo,
+    marca,
+    pantallas,
+    avisos,
+    urgente,
+    intercalar: entero(c.intercalar, 1, 10, d.intercalar),
     fuentes,
     ocultas: [...new Set((Array.isArray(c.ocultas) ? c.ocultas : []).map((x) => texto(x, 40)).filter(Boolean))].slice(-LIMITES.ocultas),
     destacadas,
@@ -107,7 +168,6 @@ export function armarPantalla(config, cache, ahora = Date.now()) {
 
   const noticias = config.soloDestacadas && destacadas.length ? destacadas : [...destacadas, ...resto];
   return {
-    titulo: config.titulo,
     segundos: config.segundos,
     noticias: noticias.slice(0, 80).map(({ id, titulo, resumen, link, imagen, fecha, fuente, fuenteId, destacada }) => ({
       id, titulo, resumen: recortar(resumen || "", 240), link, imagen, fecha, fuente, fuenteId, destacada: !!destacada,
@@ -116,6 +176,29 @@ export function armarPantalla(config, cache, ahora = Date.now()) {
   };
 }
 
+const dosDig = (n) => String(n).padStart(2, "0");
+const fechaLocal = (d) => `${d.getFullYear()}-${dosDig(d.getMonth() + 1)}-${dosDig(d.getDate())}`;
+const minutos = (hhmm) => +hhmm.slice(0, 2) * 60 + +hhmm.slice(3);
+
+// ¿Corresponde mostrar este aviso ahora en esta pantalla? (hora local del equipo)
+export function avisoVigente(a, pantallaId, ahora = new Date()) {
+  if (!a.activo) return false;
+  if (a.pantallas.length && !a.pantallas.includes(pantallaId)) return false;
+  const hoy = fechaLocal(ahora);
+  if (a.desde && hoy < a.desde) return false;
+  if (a.hasta && hoy > a.hasta) return false;
+  if (a.horaDesde && a.horaHasta) {
+    const m = ahora.getHours() * 60 + ahora.getMinutes();
+    const ini = minutos(a.horaDesde), fin = minutos(a.horaHasta);
+    const dentro = ini <= fin ? m >= ini && m < fin : m >= ini || m < fin; // franja que cruza la medianoche
+    if (!dentro) return false;
+  }
+  return true;
+}
+
+// Archivos subidos que siguen en uso (para limpiar los huérfanos)
+export const mediosEnUso = (config) => new Set([config.marca.logo, ...config.avisos.map((a) => a.imagen)].filter(Boolean));
+
 export class Almacen {
   constructor(dir) {
     this.dir = dir;
@@ -123,11 +206,14 @@ export class Almacen {
     this.cache = {};
     this.version = Date.now();
     this.refrescando = null;
+    this.vistas = new Map(); // pantallaId -> último contacto de la TV
   }
 
   async iniciar() {
     await mkdir(this.dir, { recursive: true });
-    this.config = sanearConfig({ ...CONFIG_POR_DEFECTO, ...(await this.#leer("config.json")) });
+    const leida = (await this.#leer("config.json")) || {};
+    if (leida.titulo && !leida.marca) leida.marca = { ...CONFIG_POR_DEFECTO.marca, nombre: leida.titulo }; // config de la versión 1
+    this.config = sanearConfig({ ...CONFIG_POR_DEFECTO, ...leida });
     this.cache = (await this.#leer("cache.json")) || {};
   }
 
@@ -181,8 +267,27 @@ export class Almacen {
     return this.refrescando;
   }
 
-  pantalla() {
-    return { version: this.version, generado: new Date().toISOString(), ...armarPantalla(this.config, this.cache) };
+  // Lo que pide cada TV. La versión es un hash del contenido: cambia si cambia algo visible
+  // (también cuando un aviso entra o sale de su horario, sin que nadie toque la config).
+  pantalla(id, { registrar = true } = {}) {
+    const c = this.config;
+    const p = c.pantallas.find((x) => x.id === id) || c.pantallas[0];
+    if (registrar) this.vistas.set(p.id, Date.now());
+    const ahora = new Date();
+    const cuerpo = {
+      marca: c.marca,
+      pantalla: p,
+      intercalar: c.intercalar,
+      avisos: c.avisos.filter((a) => avisoVigente(a, p.id, ahora)).map(({ id, titulo, texto, imagen, link, formato, segundos }) => ({ id, titulo, texto, imagen, link, formato, segundos })),
+      urgente: c.urgente.activo ? c.urgente : null,
+      ...armarPantalla(c, this.cache),
+    };
+    const version = createHash("sha1").update(JSON.stringify(cuerpo)).digest("hex").slice(0, 16);
+    return { version, generado: ahora.toISOString(), ...cuerpo };
+  }
+
+  estadoPantallas() {
+    return this.config.pantallas.map((p) => ({ id: p.id, visto: this.vistas.get(p.id) ? new Date(this.vistas.get(p.id)).toISOString() : null }));
   }
 
   // Para el admin: todas las notas en caché, marcadas según la config

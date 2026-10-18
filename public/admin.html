@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Administración · Pantalla IT</title>
+<title>Administración · IO Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
@@ -13,25 +13,34 @@
     --accent: #EF4444; --accent-hover: #DC2626; --ok: #22C55E; --aviso: #F59E0B; --foco: #FFFFFF;
   }
   * { box-sizing: border-box; margin: 0; }
+  :root { color-scheme: dark; } /* calendario y reloj nativos legibles sobre fondo oscuro */
   body { background: var(--bg); color: var(--fg); font: 16px/1.5 "Roboto", system-ui, sans-serif; min-height: 100vh; }
   a { color: var(--fg); text-underline-offset: 3px; }
   .mono { font-family: "Roboto Mono", ui-monospace, monospace; font-size: .9em; }
   .muted { color: var(--muted); }
   :focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
   [hidden] { display: none !important; }
+  h2 { font-family: "Newsreader", serif; font-size: 28px; font-weight: 600; margin-bottom: 4px; }
+  h3 { font-size: 18px; margin-bottom: 12px; }
 
   button, .boton { font: inherit; font-weight: 500; cursor: pointer; border: 2px solid var(--border); background: var(--card-2); color: var(--fg); padding: 8px 14px; min-height: 44px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; transition: background .15s, border-color .15s; }
   button:hover, .boton:hover { border-color: var(--muted); }
   button.primario { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
   button.primario:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-  button.chico { min-height: 36px; padding: 4px 10px; font-size: 14px; }
+  button.peligro { border-color: var(--accent); color: #FCA5A5; }
+  button.chico, .boton.chico { min-height: 36px; padding: 4px 10px; font-size: 14px; }
   button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   button:disabled { opacity: .5; cursor: progress; }
   input, select, textarea { font: inherit; color: var(--fg); background: var(--bg); border: 2px solid var(--border); padding: 8px 10px; min-height: 44px; width: 100%; }
   input:focus, select:focus, textarea:focus { border-color: var(--fg); outline: none; }
+  input[type="color"] { padding: 2px; height: 44px; width: 80px; cursor: pointer; }
+  input[type="file"] { padding: 6px; }
   label { display: block; font-weight: 500; margin-bottom: 6px; }
   .ayuda { color: var(--muted); font-size: 14px; margin-top: 4px; }
-  input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; accent-color: var(--accent); cursor: pointer; }
+  input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; min-height: 0; accent-color: var(--accent); cursor: pointer; flex: none; }
+  .fila-check { display: flex; gap: 10px; align-items: flex-start; }
+  .fila-check label { margin: 0; font-weight: 400; }
+  .fila-botones { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
   /* login */
   .login { max-width: 400px; margin: 12vh auto; padding: 0 16px; }
@@ -39,25 +48,63 @@
   .login h1 { font-family: "Newsreader", serif; font-size: 32px; line-height: 1.1; }
   .error { color: #FCA5A5; font-size: 15px; min-height: 1.5em; }
 
-  /* app */
+  /* estructura */
   header.top { display: flex; align-items: stretch; border-bottom: 2px solid var(--border); flex-wrap: wrap; }
   .marca { background: var(--accent); color: #000; font-weight: 700; padding: 0 20px; display: flex; align-items: center; text-transform: uppercase; letter-spacing: .05em; min-height: 60px; }
   .top .espacio { flex: 1; }
   .top nav { display: flex; gap: 8px; padding: 8px 16px; align-items: center; flex-wrap: wrap; }
-  .pestanas { display: flex; gap: 0; border-bottom: 2px solid var(--border); padding: 0 16px; overflow-x: auto; }
+  .pestanas { display: flex; border-bottom: 2px solid var(--border); padding: 0 16px; overflow-x: auto; }
   .pestanas button { border: 0; border-bottom: 3px solid transparent; background: none; color: var(--muted); padding: 12px 18px; white-space: nowrap; }
   .pestanas button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
   main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; }
-  h2 { font-family: "Newsreader", serif; font-size: 28px; font-weight: 600; margin-bottom: 4px; }
-  .intro { color: var(--muted); margin-bottom: 20px; max-width: 70ch; }
+  .intro { color: var(--muted); margin-bottom: 20px; max-width: 75ch; }
   .tarjeta { background: var(--card); border: 2px solid var(--border); padding: 20px; margin-bottom: 20px; }
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px 20px; }
+  .ancho { grid-column: 1 / -1; }
 
-  .resumen-estado { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  /* estado */
+  .resumen-estado { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
   .dato { background: var(--card); border: 2px solid var(--border); padding: 14px 16px; }
   .dato b { display: block; font-size: 28px; font-family: "Roboto Mono", monospace; }
   .vista { position: relative; aspect-ratio: 16/9; border: 2px solid var(--border); overflow: hidden; background: #000; }
-  .vista iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
+  .vista.vertical { aspect-ratio: 9/16; max-width: 360px; }
+  .vista iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; pointer-events: none; }
+  .urgente-activo { border-color: var(--accent); background: #2a0d12; }
+  .urgente-activo h3::before { content: "● "; color: var(--accent); }
 
+  /* pantallas */
+  .pantalla { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+  .estado-tv { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+  .estado-tv::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+  .estado-tv.ok::before { background: var(--ok); }
+  .estado-tv.mal::before { background: var(--accent); }
+  .direccion { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0 16px; }
+  .direccion code { background: var(--bg); border: 1px solid var(--border); padding: 6px 10px; font-family: "Roboto Mono", monospace; font-size: 14px; word-break: break-all; }
+  .plantillas { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .plantillas label { margin: 0; cursor: pointer; border: 2px solid var(--border); padding: 8px; display: grid; gap: 6px; font-size: 13px; font-weight: 500; text-align: center; }
+  .plantillas input { position: absolute; opacity: 0; pointer-events: none; }
+  .plantillas label:has(input:checked) { border-color: var(--accent); background: #1c0f14; }
+  .plantillas label:has(input:focus-visible) { outline: 2px solid var(--foco); outline-offset: 2px; }
+  .mini { display: grid; gap: 2px; aspect-ratio: 16/9; background: var(--border); border: 2px solid var(--border); }
+  .mini.vertical { aspect-ratio: 9/16; height: 62px; margin: 0 auto; }
+  .mini i { background: #24304a; }
+  .mini i.p { background: var(--accent); opacity: .75; }
+  .zonas-config { display: grid; gap: 12px; }
+
+  /* avisos */
+  .aviso { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .aviso .mini-img { width: 96px; aspect-ratio: 16/10; background: var(--card-2) center/cover no-repeat; border: 1px solid var(--border); display: grid; place-items: center; color: var(--muted); font-size: 12px; }
+  .aviso .meta { font-size: 14px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
+  .badge { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border: 1px solid var(--border); white-space: nowrap; }
+  .badge.si { border-color: var(--ok); color: #86EFAC; }
+  .badge.no { border-color: var(--accent); color: #FCA5A5; }
+  .badge.prog { border-color: var(--aviso); color: #FCD34D; }
+  .badge.d { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .acciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .previa-img { width: min(280px, 100%); aspect-ratio: 16/10; background: var(--card-2) center/contain no-repeat; border: 1px solid var(--border); }
+  .opciones-formato { display: flex; gap: 20px; flex-wrap: wrap; }
+
+  /* noticias */
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   th { color: var(--muted); font-weight: 500; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
@@ -67,32 +114,27 @@
   .estado-f.mal::before { background: var(--accent); }
   .estado-f.nada::before { background: var(--muted); }
   .tabla-scroll { overflow-x: auto; }
-
   .agregar { display: grid; grid-template-columns: 2fr 1fr auto auto; gap: 12px; align-items: end; }
   .resultado { margin-top: 12px; font-size: 15px; }
-
   .filtros { display: grid; grid-template-columns: 1fr 220px auto; gap: 12px; align-items: end; margin-bottom: 16px; }
   .nota { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); align-items: center; }
   .nota.apagada .titulo { color: var(--muted); text-decoration: line-through; }
   .nota .titulo { font-weight: 500; }
   .nota .meta { font-size: 14px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
-  .badge { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border: 1px solid var(--border); }
-  .badge.d { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   .badge.o { border-color: var(--accent); color: #FCA5A5; }
   .badge.f { border-color: var(--aviso); color: #FCD34D; }
-  .acciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
-  .ajustes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-  .fila-check { display: flex; gap: 12px; align-items: flex-start; }
-  .fila-check label { margin: 0; }
+  .logo-previa { height: 48px; max-width: 200px; object-fit: contain; background: var(--card-2); border: 1px solid var(--border); padding: 4px; }
 
-  .aviso-flotante { position: fixed; bottom: 20px; right: 20px; background: var(--fg); color: var(--bg); padding: 12px 18px; font-weight: 500; transform: translateY(150%); visibility: hidden; transition: transform .2s, visibility .2s; z-index: 10; }
+  .aviso-flotante { position: fixed; bottom: 20px; right: 20px; background: var(--fg); color: var(--bg); padding: 12px 18px; font-weight: 500; transform: translateY(150%); visibility: hidden; transition: transform .2s, visibility .2s; z-index: 10; max-width: calc(100vw - 40px); }
   .aviso-flotante.ver { transform: none; visibility: visible; }
   .aviso-flotante.mal { background: var(--accent); color: #000; }
 
-  @media (max-width: 720px) {
+  @media (max-width: 860px) {
+    .pantalla { grid-template-columns: 1fr; }
     .agregar, .filtros { grid-template-columns: 1fr; }
-    .nota { grid-template-columns: 1fr; }
+    .nota, .aviso { grid-template-columns: 1fr; }
+    .aviso .mini-img { width: 100%; max-width: 240px; }
     .acciones { justify-content: flex-start; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -102,8 +144,8 @@
   <!-- ingreso -->
   <section class="login" id="vista-login" hidden>
     <form id="form-login">
-      <h1>Pantalla de noticias IT</h1>
-      <p class="muted">Ingresá la clave de administración para elegir qué se muestra en la TV.</p>
+      <h1>IO Display</h1>
+      <p class="muted">Ingresá la clave de administración para elegir qué se muestra en las pantallas.</p>
       <div>
         <label for="clave">Clave</label>
         <input id="clave" type="password" autocomplete="current-password" required>
@@ -113,45 +155,121 @@
     </form>
   </section>
 
-  <!-- panel -->
   <div id="vista-app" hidden>
     <header class="top">
-      <div class="marca">Pantalla IT · Admin</div>
+      <div class="marca">IO Display · Admin</div>
       <div class="espacio"></div>
-      <nav>
-        <a class="boton" href="/tv" target="_blank" rel="noopener">Ver la pantalla ↗</a>
-        <button id="salir" type="button">Salir</button>
-      </nav>
+      <nav><button id="salir" type="button">Salir</button></nav>
     </header>
     <div class="pestanas" role="tablist">
       <button role="tab" aria-selected="true" data-p="estado">Estado</button>
-      <button role="tab" aria-selected="false" data-p="fuentes">Fuentes</button>
-      <button role="tab" aria-selected="false" data-p="noticias">Noticias</button>
-      <button role="tab" aria-selected="false" data-p="ajustes">Ajustes</button>
+      <button role="tab" aria-selected="false" data-p="pantallas">Pantallas</button>
+      <button role="tab" aria-selected="false" data-p="avisos">Avisos propios</button>
+      <button role="tab" aria-selected="false" data-p="noticias">Noticias RSS</button>
+      <button role="tab" aria-selected="false" data-p="ajustes">Marca y ajustes</button>
     </div>
 
     <main>
+      <!-- ESTADO -->
       <section data-panel="estado">
-        <h2>Lo que está viendo la TV</h2>
-        <p class="intro">La pantalla toma los cambios en menos de un minuto. Si se corta internet, sigue mostrando las últimas noticias guardadas.</p>
+        <h2>Estado</h2>
+        <p class="intro">Las pantallas toman los cambios en menos de medio minuto. Si se corta internet o el servidor, siguen mostrando lo último que recibieron.</p>
         <div class="resumen-estado" id="datos-estado"></div>
-        <div class="vista" id="vista"><iframe src="/tv" title="Vista previa de la pantalla" tabindex="-1"></iframe></div>
+
+        <form class="tarjeta" id="form-urgente">
+          <h3>Mensaje urgente</h3>
+          <p class="ayuda" style="margin:-6px 0 14px">Tapa todas las pantallas hasta que lo quites. Para emergencias, cortes de servicio o avisos que no pueden esperar.</p>
+          <div class="rejilla">
+            <div><label for="u-titulo">Título</label><input id="u-titulo" maxlength="80" required placeholder="Ej.: Evacuación por simulacro"></div>
+            <div><label for="u-color">Color</label><select id="u-color"><option value="rojo">Rojo (emergencia)</option><option value="ambar">Ámbar (precaución)</option><option value="azul">Azul (informativo)</option></select></div>
+            <div class="ancho"><label for="u-texto">Texto</label><textarea id="u-texto" rows="2" maxlength="300" placeholder="Ej.: Diríjanse a la salida más cercana."></textarea></div>
+          </div>
+          <div class="fila-botones" style="margin-top:16px">
+            <button class="primario" type="submit" id="u-mostrar">Mostrar en todas las pantallas</button>
+            <button type="button" id="u-quitar" hidden>Quitar el mensaje</button>
+          </div>
+        </form>
+
+        <h3>Vista previa: <span id="vista-nombre"></span></h3>
+        <div class="vista" id="vista"><iframe title="Vista previa de la pantalla" tabindex="-1"></iframe></div>
       </section>
 
-      <section data-panel="fuentes" hidden>
-        <h2>Fuentes RSS</h2>
-        <p class="intro">Elegí de qué medios se toman las noticias. Las fuentes apagadas no aparecen en la TV, pero quedan guardadas.</p>
+      <!-- PANTALLAS -->
+      <section data-panel="pantallas" hidden>
+        <h2>Pantallas</h2>
+        <p class="intro">Cada TV abre su propia dirección. Elegí la plantilla (cómo se divide la pantalla) y qué muestra cada zona.</p>
+        <div id="lista-pantallas"></div>
+        <form class="tarjeta" id="form-nueva-pantalla">
+          <h3>Agregar una pantalla</h3>
+          <div class="fila-botones">
+            <div style="flex:1;min-width:220px"><label for="np-nombre">Nombre</label><input id="np-nombre" maxlength="40" required placeholder="Ej.: Recepción, Comedor, Sala de espera"></div>
+            <button type="submit" class="primario" style="align-self:flex-end">Agregar</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- AVISOS -->
+      <section data-panel="avisos" hidden>
+        <h2>Avisos propios</h2>
+        <p class="intro">Contenido de la empresa: promociones, novedades, avisos de RR. HH., menús. Pueden tener imagen, texto y un QR, y salir solo en ciertas fechas, horarios o pantallas.</p>
+        <p style="margin-bottom:16px"><button class="primario" type="button" id="nuevo-aviso">Nuevo aviso</button></p>
+
+        <form class="tarjeta" id="form-aviso" hidden>
+          <h3 id="titulo-form-aviso">Nuevo aviso</h3>
+          <div class="rejilla">
+            <div class="ancho"><label for="a-titulo">Título</label><input id="a-titulo" maxlength="120" placeholder="Ej.: Esta semana: capacitación en ciberseguridad"></div>
+            <div class="ancho"><label for="a-texto">Texto</label><textarea id="a-texto" rows="3" maxlength="400" placeholder="Detalle breve. Se lee a unos metros: mejor pocas líneas."></textarea></div>
+            <div class="ancho">
+              <label for="a-archivo">Imagen</label>
+              <input id="a-archivo" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+              <p class="ayuda">JPG, PNG, WebP o GIF de hasta 8 MB. Para pantalla completa conviene 1920×1080.</p>
+              <div class="fila-botones" style="margin-top:8px"><div class="previa-img" id="a-previa" hidden></div><button type="button" class="chico" id="a-quitar-img" hidden>Quitar imagen</button></div>
+            </div>
+            <fieldset class="ancho" style="border:0;padding:0">
+              <legend style="font-weight:500;margin-bottom:6px">Formato</legend>
+              <div class="opciones-formato">
+                <div class="fila-check"><input type="radio" name="a-formato" id="a-f-tarjeta" value="tarjeta" checked><label for="a-f-tarjeta">Tarjeta (título, texto e imagen al costado)</label></div>
+                <div class="fila-check"><input type="radio" name="a-formato" id="a-f-afiche" value="afiche"><label for="a-f-afiche">Afiche (solo la imagen, a toda la zona)</label></div>
+              </div>
+            </fieldset>
+            <div><label for="a-link">Link para el QR (opcional)</label><input id="a-link" type="url" placeholder="https://"></div>
+            <div><label for="a-segundos">Segundos en pantalla</label><input id="a-segundos" type="number" min="5" max="120" value="12"></div>
+            <div><label for="a-desde">Desde (fecha)</label><input id="a-desde" type="date"></div>
+            <div><label for="a-hasta">Hasta (fecha)</label><input id="a-hasta" type="date"></div>
+            <div><label for="a-hdesde">Desde la hora</label><input id="a-hdesde" type="time"></div>
+            <div><label for="a-hhasta">Hasta la hora</label><input id="a-hhasta" type="time"><p class="ayuda">Si la dejás vacía, sale todo el día.</p></div>
+            <fieldset class="ancho" style="border:0;padding:0">
+              <legend style="font-weight:500;margin-bottom:6px">Pantallas</legend>
+              <div class="opciones-formato" id="a-pantallas"></div>
+              <p class="ayuda">Si no marcás ninguna, sale en todas.</p>
+            </fieldset>
+            <div class="fila-check ancho"><input type="checkbox" id="a-activo" checked><label for="a-activo">Activo</label></div>
+          </div>
+          <div class="fila-botones" style="margin-top:20px">
+            <button class="primario" type="submit">Guardar aviso</button>
+            <button type="button" id="a-cancelar">Cancelar</button>
+          </div>
+        </form>
+
+        <div class="tarjeta"><div id="lista-avisos"></div></div>
+      </section>
+
+      <!-- NOTICIAS -->
+      <section data-panel="noticias" hidden>
+        <h2>Noticias RSS</h2>
+        <p class="intro">De qué medios se toman las noticias y cuáles se muestran. Cada nota sale con su fuente, la fecha y un QR a la nota original.</p>
         <div class="tarjeta">
+          <h3>Fuentes</h3>
           <div class="tabla-scroll">
             <table>
-              <thead><tr><th>En TV</th><th>Medio</th><th>Dirección del feed</th><th>Estado</th><th></th></tr></thead>
+              <thead><tr><th>En uso</th><th>Medio</th><th>Dirección del feed</th><th>Estado</th><th></th></tr></thead>
               <tbody id="tabla-fuentes"></tbody>
             </table>
           </div>
           <p style="margin-top:16px"><button id="refrescar" type="button">Actualizar las noticias ahora</button></p>
         </div>
         <div class="tarjeta">
-          <h3 style="margin-bottom:12px">Agregar una fuente</h3>
+          <h3>Agregar una fuente</h3>
           <form class="agregar" id="form-fuente">
             <div><label for="f-url">Dirección del feed (RSS o Atom)</label><input id="f-url" type="url" placeholder="https://www.ejemplo.com/feed" required></div>
             <div><label for="f-nombre">Nombre a mostrar</label><input id="f-nombre" maxlength="40" placeholder="Ej.: Xataka"></div>
@@ -160,11 +278,8 @@
           </form>
           <div class="resultado" id="resultado-prueba" role="status"></div>
         </div>
-      </section>
-
-      <section data-panel="noticias" hidden>
-        <h2>Noticias</h2>
-        <p class="intro">Todas las notas que trajeron las fuentes. <b>Destacar</b> la fija en la pantalla aunque el medio la saque de su feed. <b>Ocultar</b> la saca de la TV.</p>
+        <h3>Notas</h3>
+        <p class="ayuda" style="margin:-6px 0 14px"><b>Destacar</b> la fija y la pone primera aunque el medio la saque de su feed. <b>Ocultar</b> la saca de todas las pantallas.</p>
         <div class="filtros">
           <div><label for="buscar">Buscar</label><input id="buscar" type="search" placeholder="Palabra del título"></div>
           <div><label for="filtro-fuente">Medio</label><select id="filtro-fuente"></select></div>
@@ -173,25 +288,42 @@
         <div id="lista-notas"></div>
       </section>
 
+      <!-- AJUSTES -->
       <section data-panel="ajustes" hidden>
-        <h2>Ajustes de la pantalla</h2>
-        <p class="intro">Qué se muestra y a qué ritmo.</p>
-        <form class="tarjeta" id="form-ajustes">
-          <div class="ajustes">
-            <div><label for="a-titulo">Título en la pantalla</label><input id="a-titulo" maxlength="40" required></div>
-            <div><label for="a-segundos">Segundos por noticia</label><input id="a-segundos" type="number" min="8" max="60" required><p class="ayuda">Entre 8 y 60.</p></div>
-            <div><label for="a-horas">Antigüedad máxima (horas)</label><input id="a-horas" type="number" min="6" max="168" required><p class="ayuda">Las notas más viejas no salen, salvo las destacadas.</p></div>
-            <div><label for="a-porfuente">Notas por medio</label><input id="a-porfuente" type="number" min="1" max="15" required><p class="ayuda">Así ningún medio ocupa toda la pantalla.</p></div>
+        <h2>Marca y ajustes</h2>
+        <p class="intro">Cómo se presenta la empresa en las pantallas y a qué ritmo pasa el contenido.</p>
+        <form id="form-ajustes">
+          <div class="tarjeta">
+            <h3>Marca</h3>
+            <div class="rejilla">
+              <div><label for="m-nombre">Nombre en pantalla</label><input id="m-nombre" maxlength="40" required></div>
+              <div><label for="m-acento">Color de acento</label><input id="m-acento" type="color"></div>
+              <div class="ancho">
+                <label for="m-logo">Logo (opcional)</label>
+                <input id="m-logo" type="file" accept="image/png,image/webp,image/jpeg">
+                <p class="ayuda">Mejor PNG con fondo transparente. Se muestra en la barra superior, sobre el color de acento.</p>
+                <div class="fila-botones" style="margin-top:8px"><img class="logo-previa" id="m-logo-previa" alt="" hidden><button type="button" class="chico" id="m-quitar-logo" hidden>Quitar logo</button></div>
+              </div>
+            </div>
           </div>
-          <div style="margin-top:20px"><label for="a-excluir">Palabras a excluir</label><textarea id="a-excluir" rows="3" placeholder="Una por línea. Ej.: oferta, descuento, Black Friday"></textarea><p class="ayuda">Si una de estas palabras aparece en el título o el resumen, la nota no sale en la TV.</p></div>
-          <div class="fila-check" style="margin-top:20px"><input type="checkbox" id="a-solo"><div><label for="a-solo">Mostrar solo las destacadas</label><p class="ayuda">Si no hay ninguna destacada, se muestran todas.</p></div></div>
-          <p style="margin-top:20px"><button class="primario" type="submit">Guardar ajustes</button></p>
+          <div class="tarjeta">
+            <h3>Ritmo y filtros</h3>
+            <div class="rejilla">
+              <div><label for="r-segundos">Segundos por noticia</label><input id="r-segundos" type="number" min="8" max="60" required></div>
+              <div><label for="r-intercalar">Un aviso cada cuántas noticias</label><input id="r-intercalar" type="number" min="1" max="10" required><p class="ayuda">En las zonas "Noticias y avisos intercalados".</p></div>
+              <div><label for="r-horas">Antigüedad máxima de las noticias (horas)</label><input id="r-horas" type="number" min="6" max="168" required></div>
+              <div><label for="r-porfuente">Noticias por medio</label><input id="r-porfuente" type="number" min="1" max="15" required></div>
+              <div class="ancho"><label for="r-excluir">Palabras a excluir</label><textarea id="r-excluir" rows="3" placeholder="Una por línea. Ej.: oferta, descuento, Black Friday"></textarea><p class="ayuda">Si aparecen en el título o el resumen, la noticia no sale.</p></div>
+              <div class="fila-check ancho"><input type="checkbox" id="r-solo"><div><label for="r-solo">Mostrar solo las noticias destacadas</label><p class="ayuda">Si no hay ninguna destacada, se muestran todas.</p></div></div>
+            </div>
+          </div>
+          <button class="primario" type="submit">Guardar marca y ajustes</button>
         </form>
       </section>
     </main>
   </div>
 
   <div class="aviso-flotante" id="aviso" role="status" aria-live="polite"></div>
-<script src="/admin.js"></script>
+<script type="module" src="/admin.js"></script>
 </body>
 </html>
