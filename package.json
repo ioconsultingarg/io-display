@@ -1,5 +1,5 @@
 {
-  "name": "pantalla-noticias-it",
+  "name": "io-display",
   "version": "1.0.0",
   "description": "Pantalla de TV 24/7 con noticias de informática por RSS, citando fuentes, con panel de administración.",
   "private": true,

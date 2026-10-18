@@ -1,4 +1,4 @@
-# Pantalla de noticias IT
+# IO Display · Pantalla de noticias IT
 
 Pantalla para una TV encendida las 24 horas en un espacio común. Muestra noticias de informática que
 toma de RSS en español, una por vez, siempre citando la fuente: el medio, cuándo se publicó, el link y
