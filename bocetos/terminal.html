@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terminal de Noticias</title>
+<!-- Boceto 3 · skill web-animation-engines: Anime.js v4 (timeline + stagger) sin framework (descartado).
+     Paleta de marca IO Consulting: negro #0a0a0a + verde neón #00ff41. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --negro: #0a0a0a;
+    --verde: #00ff41;
+    --verde-medio: #00b82f;
+    --verde-tenue: #0d3d1a;
+    --texto: #d7ffe0;
+    --gris: #6b8f74;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; overflow: hidden; cursor: none; }
+  body { background: var(--negro); color: var(--texto); font-family: "JetBrains Mono", monospace; padding: 2vw 2.6vw; display: grid; grid-template-rows: auto 1fr auto; gap: 1.4vw; position: relative; }
+  /* CRT: líneas de barrido + viñeta */
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 9; background: repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px); }
+  body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 9; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.65) 100%); }
+  .v { color: var(--verde); }
+  .g { color: var(--gris); }
+
+  header { display: flex; justify-content: space-between; align-items: baseline; font-size: 1.15vw; border-bottom: 1px dashed var(--verde-tenue); padding-bottom: 1vw; }
+  .prompt b { color: var(--verde); font-weight: 600; }
+  .cursor { display: inline-block; width: .65em; height: 1.05em; background: var(--verde); vertical-align: -.15em; animation: tit 1s steps(1) infinite; }
+  @keyframes tit { 50% { opacity: 0; } }
+  .hora { font-family: "Chakra Petch", sans-serif; font-weight: 700; font-size: 2.6vw; color: var(--verde); text-shadow: 0 0 .6vw rgba(0,255,65,.55); letter-spacing: .04em; }
+
+  main { display: grid; grid-template-columns: 1fr 33vw; gap: 2.6vw; min-height: 0; }
+  .nota { display: flex; flex-direction: column; min-height: 0; }
+  .marca { font-size: 1.05vw; letter-spacing: .1em; margin-bottom: 1.4vw; }
+  .marca span { border: 1px solid var(--verde); color: var(--verde); padding: .2vw .7vw; margin-right: .8vw; }
+  h1 { font-family: "Chakra Petch", sans-serif; font-weight: 700; font-size: 3.9vw; line-height: 1.1; color: #f2fff5; text-wrap: balance; }
+  h1 .c { display: inline-block; white-space: pre; }
+  .resumen { margin-top: 1.6vw; font-size: 1.4vw; line-height: 1.6; color: var(--texto); max-width: 52vw; opacity: .9; }
+  .resumen::before { content: "// "; color: var(--verde-medio); }
+  .cita { margin-top: auto; display: grid; grid-template-columns: 8vw 1fr; gap: 1.6vw; align-items: center; border: 1px solid var(--verde-tenue); padding: 1.2vw; background: rgba(0,255,65,.03); }
+  .cita .qr { background: var(--verde); padding: .35vw; }
+  .cita .qr svg { display: block; }
+  .cita pre { font-family: inherit; font-size: 1.1vw; line-height: 1.75; white-space: pre-wrap; word-break: break-all; }
+
+  .log { border-left: 1px dashed var(--verde-tenue); padding-left: 2vw; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .log h2 { font-size: 1vw; font-weight: 400; color: var(--gris); margin-bottom: 1vw; }
+  .log ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 1.05vw; }
+  .log li { font-size: 1.05vw; line-height: 1.45; display: grid; grid-template-columns: 4.2vw 1fr; }
+  .log li .t { color: var(--gris); }
+  .log li .f { color: var(--verde); font-weight: 600; text-transform: uppercase; font-size: .85vw; letter-spacing: .08em; display: block; }
+  .log li.ahora { color: #fff; }
+  .log li.ahora .t::before { content: "▶ "; color: var(--verde); }
+
+  footer { display: flex; justify-content: space-between; font-size: 1.05vw; border-top: 1px dashed var(--verde-tenue); padding-top: 1vw; }
+  #barra { color: var(--verde); letter-spacing: -.05em; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="prompt"><b>io@sala</b>:<span class="v">~</span>$ tail -f noticias/informatica.log <span class="cursor"></span></div>
+    <div class="hora" id="hora"></div>
+  </header>
+
+  <main>
+    <section class="nota" id="nota"></section>
+    <aside class="log"><h2># últimas entradas</h2><ul id="log"></ul></aside>
+  </main>
+
+  <footer>
+    <div><span class="g">estado:</span> <span id="estado">conectando…</span></div>
+    <div><span class="g">próxima</span> <span id="barra"></span></div>
+  </footer>
+
+<script src="https://cdn.jsdelivr.net/npm/animejs@4.0.2/lib/anime.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="fuentes.js"></script>
+<script src="nucleo.js"></script>
+<script>
+  const P = window.PantallaIT, $ = (id) => document.getElementById(id);
+  const { createTimeline, animate, stagger } = window.anime || {};
+  const animar = !!createTimeline && !P.reducirMovimiento;
+  const ROTAR_MS = 16000;
+  let inicioRotacion = Date.now();
+
+  P.reloj((d) => {
+    $("hora").textContent = d.toLocaleTimeString("es-AR", { hour12: false });
+    // barra ASCII de cuenta regresiva hasta la próxima nota
+    const avance = Math.min(1, (Date.now() - inicioRotacion) / ROTAR_MS);
+    const llenos = Math.round(avance * 24);
+    $("barra").textContent = "[" + "█".repeat(llenos) + "░".repeat(24 - llenos) + "]";
+  });
+
+  // Parte el titular en letras para el efecto de "tipeo"; mantiene las palabras juntas
+  const letras = (txt) => P.esc(txt).split(" ").map((w) => `<span style="display:inline-block">${[...w].map((c) => `<span class="c">${c}</span>`).join("")}</span>`).join(" ");
+
+  P.iniciar({
+    cadaMs: ROTAR_MS,
+    alCargar(d) {
+      const ok = d.total - d.caidas;
+      const txt = { vivo: "OK", cache: "SIN RED (caché)", demo: "SIN CONEXIÓN" }[d.origen];
+      $("estado").innerHTML = `<span class="v">${txt}</span> · feeds ${ok}/${d.total} · sync ${P.fmtHora(new Date())} · refresco cada 15 min`;
+    },
+    alRotar(n, i, d) {
+      inicioRotacion = Date.now();
+      $("nota").innerHTML = `
+        <div class="marca"><span>${P.esc(n.fuente.toUpperCase())}</span><span class="g" style="border:0;padding:0">${P.haceCuanto(n.fecha)}</span></div>
+        <h1>${letras(n.titulo)}</h1>
+        <p class="resumen">${P.esc(n.resumen || "")}</p>
+        <div class="cita">
+          <div class="qr">${P.qrSVG(n.link, { color: "#0a0a0a" })}</div>
+          <pre><span class="g">fuente :</span> <span class="v">${P.esc(n.fuente)}</span>
+<span class="g">fecha  :</span> ${n.fecha.toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short", hourCycle: "h23" })}
+<span class="g">url    :</span> ${P.esc(P.linkCorto(n.link))}
+<span class="g">leer   :</span> escaneá el QR</pre>
+        </div>`;
+
+      // log: la actual + las 5 más recientes del conjunto
+      const lista = [n, ...d.recientes.filter((r) => r.id !== n.id).slice(0, 5)];
+      $("log").innerHTML = lista.map((r, k) => `<li class="${k ? "" : "ahora"}"><span class="t">${P.fmtHora(r.fecha)}</span><div><span class="f">${P.esc(r.fuente)}</span>${P.esc(P.recortar(r.titulo, 90))}</div></li>`).join("");
+
+      if (!animar) return;
+      createTimeline()
+        .add(".marca", { opacity: [0, 1], x: [-30, 0], duration: 400, ease: "outQuad" })
+        .add("h1 .c", { opacity: [0, 1], color: ["#00ff41", "#f2fff5"], duration: 380, delay: stagger(14), ease: "outQuad" }, "-=150")
+        .add(".resumen", { opacity: [0, 0.9], y: [12, 0], duration: 600, ease: "outCubic" }, "-=500")
+        .add(".cita", { opacity: [0, 1], scaleY: [0.6, 1], duration: 500, ease: "outBack" }, "-=300");
+      animate("#log li", { opacity: [0, 1], x: [24, 0], delay: stagger(70, { start: 300 }), duration: 500, ease: "outCubic" });
+    },
+  });
+</script>
+</body>
+</html>

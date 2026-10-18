@@ -15,6 +15,7 @@ import { bajarFeed, parsearFeed, tituloDelFeed, urlPublicaValida } from "./src/r
 
 const RAIZ = fileURLToPath(new URL(".", import.meta.url));
 const PUBLICO = join(RAIZ, "public");
+const BOCETOS = join(RAIZ, "bocetos");
 const DATA = process.env.DATA_DIR || join(RAIZ, "data");
 const PUERTO = Number(process.env.PORT) || 8080;
 const REFRESCO_MS = 10 * 60 * 1000;
@@ -34,6 +35,10 @@ const SEGURIDAD = {
   "X-Frame-Options": "SAMEORIGIN",
   "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'",
 };
+
+// Los bocetos de estilo son maquetas estáticas que cargan librerías de CDN y scripts en línea:
+// llevan su propia política, más abierta. La TV y el admin mantienen la estricta.
+const CSP_BOCETOS = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' https://api.rss2json.com; frame-ancestors 'self'; base-uri 'none'";
 
 const responder = (res, status, cuerpo, extra = {}) => {
   const json = typeof cuerpo !== "string";
@@ -57,12 +62,12 @@ async function leerJSON(req) {
   }
 }
 
-async function servirArchivo(res, ruta) {
-  const destino = normalize(join(PUBLICO, ruta));
-  if (!destino.startsWith(PUBLICO + sep)) return responder(res, 403, "Prohibido");
+async function servirArchivo(res, ruta, base = PUBLICO, extra = {}) {
+  const destino = normalize(join(base, ruta));
+  if (!destino.startsWith(base + sep)) return responder(res, 403, "Prohibido");
   try {
     const cuerpo = await readFile(destino);
-    res.writeHead(200, { ...SEGURIDAD, "Content-Type": TIPOS[extname(destino)] || "application/octet-stream", "Cache-Control": "no-cache" });
+    res.writeHead(200, { ...SEGURIDAD, "Content-Type": TIPOS[extname(destino)] || "application/octet-stream", "Cache-Control": "no-cache", ...extra });
     res.end(cuerpo);
   } catch {
     responder(res, 404, "No encontrado");
@@ -151,6 +156,13 @@ http
       if (manejador) {
         if (!auth.valida(req)) return responder(res, 401, { ok: false, error: "Sesión vencida" });
         return responder(res, 200, await manejador(req));
+      }
+
+      // --- bocetos de estilo (referencia, no es la pantalla de producción) ---
+      if (req.method === "GET" && ruta === "/bocetos") return res.writeHead(301, { Location: "/bocetos/" }).end();
+      if (req.method === "GET" && ruta.startsWith("/bocetos/")) {
+        const archivo = decodeURIComponent(ruta.slice("/bocetos/".length)) || "index.html";
+        return servirArchivo(res, archivo, BOCETOS, { "Content-Security-Policy": CSP_BOCETOS });
       }
 
       // --- archivos estáticos ---

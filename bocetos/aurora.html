@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar IT</title>
+<!-- Boceto 4 · skill animated-ui-sources (descartado): patrones estilo React Bits (Aurora, BlurText) y
+     Magic UI (Bento grid, BorderBeam, Marquee) reescritos en CSS/JS puro — código propio, sin copiar
+     componentes; React Bits y Magic UI quedan solo como referencia visual. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  @property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+  :root {
+    --fondo: #070814;
+    --vidrio: rgba(255,255,255,.055);
+    --borde: rgba(255,255,255,.12);
+    --texto: #f4f3ff;
+    --suave: #a9a7c7;
+    --c1: #22d3ee; --c2: #a3e635; --c3: #f472b6; --c4: #6366f1;
+    --r: 1.4vw;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; overflow: hidden; cursor: none; }
+  body { background: var(--fondo); color: var(--texto); font-family: "Manrope", sans-serif; padding: 1.8vw 2.2vw; display: grid; grid-template-rows: auto 1fr 7.4vw; gap: 1.2vw; }
+
+  /* ---- fondo aurora ---- */
+  .aurora { position: fixed; inset: -20%; z-index: -1; filter: blur(7vw) saturate(1.3); opacity: .55; }
+  .aurora i { position: absolute; width: 50vw; height: 50vw; border-radius: 50%; mix-blend-mode: screen; }
+  .aurora i:nth-child(1) { background: var(--c4); left: 5%; top: 10%; animation: flotar 26s ease-in-out infinite alternate; }
+  .aurora i:nth-child(2) { background: var(--c1); right: 0; top: 0; animation: flotar 32s ease-in-out infinite alternate-reverse; }
+  .aurora i:nth-child(3) { background: var(--c3); left: 35%; bottom: -5%; width: 40vw; height: 40vw; opacity: .7; animation: flotar 38s ease-in-out infinite alternate; }
+  @keyframes flotar { 50% { transform: translate(12vw, 6vw) scale(1.15); } 100% { transform: translate(-6vw, 10vw) scale(.9); } }
+
+  header { display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 2.2vw; letter-spacing: -.03em; display: flex; align-items: center; gap: .8vw; }
+  .radar { width: 2.4vw; height: 2.4vw; border-radius: 50%; border: 2px solid var(--c2); position: relative; overflow: hidden; }
+  .radar::after { content: ""; position: absolute; inset: 0; background: conic-gradient(from 0deg, transparent 70%, var(--c2)); animation: girar 3s linear infinite; }
+  @keyframes girar { to { transform: rotate(1turn); } }
+  .pildoras { display: flex; gap: .8vw; align-items: center; }
+  .pildora { background: var(--vidrio); border: 1px solid var(--borde); border-radius: 99px; padding: .5vw 1.2vw; font-size: 1vw; color: var(--suave); backdrop-filter: blur(12px); }
+  .pildora.reloj { color: var(--texto); font-family: "Bricolage Grotesque"; font-weight: 700; font-size: 1.9vw; padding: .3vw 1.4vw; font-variant-numeric: tabular-nums; }
+  .vivo::before { content: ""; display: inline-block; width: .6vw; height: .6vw; border-radius: 50%; background: var(--c2); margin-right: .5vw; box-shadow: 0 0 0 0 var(--c2); animation: latido 2s infinite; }
+  @keyframes latido { 70% { box-shadow: 0 0 0 .6vw transparent; } }
+
+  /* ---- bento ---- */
+  .bento { display: grid; grid-template-columns: 2.1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1.2vw; min-height: 0; }
+  .card { background: var(--vidrio); border: 1px solid var(--borde); border-radius: var(--r); backdrop-filter: blur(18px); position: relative; overflow: hidden; min-height: 0; }
+  .principal { grid-row: 1 / 3; display: flex; flex-direction: column; justify-content: flex-end; padding: 2.6vw; isolation: isolate; }
+  .principal .bg { position: absolute; inset: 0; z-index: -1; }
+  .principal .bg img { width: 100%; height: 100%; object-fit: cover; opacity: .5; animation: kenburns 16s ease-out both; }
+  .principal .bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,8,20,.15) 0%, rgba(7,8,20,.75) 45%, rgba(7,8,20,.96) 100%); }
+  @keyframes kenburns { from { transform: scale(1.12); } to { transform: scale(1); } }
+  /* borde con luz que recorre la tarjeta (idea "border beam") */
+  .haz::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 2px; background: conic-gradient(from var(--ang), transparent 0 75%, var(--c1), var(--c2), transparent 95%); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: haz 7s linear infinite; pointer-events: none; }
+  @keyframes haz { to { --ang: 360deg; } }
+  .etiq { display: inline-flex; gap: .7vw; align-items: center; margin-bottom: 1.2vw; }
+  .chip { border-radius: 99px; padding: .35vw 1vw; font-size: 1vw; font-weight: 700; background: linear-gradient(90deg, var(--c1), var(--c2)); color: #061018; }
+  .chip.g { background: rgba(255,255,255,.1); color: var(--texto); font-weight: 500; }
+  h1 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 3.6vw; line-height: 1.05; letter-spacing: -.025em; text-wrap: balance; }
+  h1 .w { display: inline-block; opacity: 0; filter: blur(12px); transform: translateY(.6em); animation: nitido .8s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes nitido { to { opacity: 1; filter: blur(0); transform: none; } }
+  .resumen { margin-top: 1.2vw; font-size: 1.35vw; line-height: 1.55; color: #d6d4ee; max-width: 46vw; opacity: 0; animation: nitido .9s .9s forwards; }
+
+  .cita { padding: 1.8vw; display: grid; grid-template-columns: 1fr 9vw; gap: 1.4vw; align-items: center; }
+  .cita .lbl { font-size: .9vw; text-transform: uppercase; letter-spacing: .14em; color: var(--suave); }
+  .cita .src { font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 2.4vw; letter-spacing: -.02em; margin: .3vw 0 .6vw; background: linear-gradient(90deg, var(--c1), var(--c2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .cita .url { font-size: .95vw; color: var(--suave); word-break: break-all; line-height: 1.4; }
+  .cita .qr { background: #fff; border-radius: .8vw; padding: .5vw; }
+  .cita .qr svg { display: block; }
+
+  .medios { padding: 1.6vw 1.8vw; display: flex; flex-direction: column; }
+  .medios h3 { font-size: .9vw; text-transform: uppercase; letter-spacing: .14em; color: var(--suave); font-weight: 500; margin-bottom: .8vw; }
+  .barras { display: grid; grid-template-columns: auto 1fr auto; gap: .45vw .8vw; align-items: center; font-size: .95vw; flex: 1; align-content: space-between; }
+  .barras .b { height: .55vw; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .barras .b i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--c4), var(--c1)); transform-origin: left; transition: transform 1.2s cubic-bezier(.2,.7,.2,1); }
+  .barras .on { color: var(--c2); font-weight: 700; }
+  .barras .on + .b i { background: linear-gradient(90deg, var(--c1), var(--c2)); }
+  .barras .n { color: var(--suave); font-variant-numeric: tabular-nums; }
+
+  /* ---- marquesina ---- */
+  .marquesina { overflow: hidden; -webkit-mask: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+  .pista { display: flex; gap: 1.2vw; width: max-content; height: 100%; animation: pasar 160s linear infinite; }
+  .pista .card { width: 26vw; padding: 1vw 1.3vw; display: flex; flex-direction: column; justify-content: center; gap: .3vw; border-radius: 1vw; }
+  .pista b { font-size: .8vw; text-transform: uppercase; letter-spacing: .12em; color: var(--c1); }
+  .pista span { font-size: 1.1vw; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  @keyframes pasar { to { transform: translateX(-50%); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; }
+    h1 .w, .resumen { opacity: 1; filter: none; transform: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <header>
+    <div class="logo"><span class="radar"></span>Radar IT</div>
+    <div class="pildoras">
+      <span class="pildora vivo" id="estado">Conectando</span>
+      <span class="pildora" id="fecha"></span>
+      <span class="pildora reloj" id="hora"></span>
+    </div>
+  </header>
+
+  <section class="bento">
+    <article class="card principal haz" id="principal"></article>
+    <div class="card cita" id="cita"></div>
+    <div class="card medios"><h3>Notas por medio · últimas 72 h</h3><div class="barras" id="barras"></div></div>
+  </section>
+
+  <div class="marquesina"><div class="pista" id="pista"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="fuentes.js"></script>
+<script src="nucleo.js"></script>
+<script>
+  const P = window.PantallaIT, $ = (id) => document.getElementById(id);
+
+  P.reloj((d) => { $("hora").textContent = P.fmtHora(d); $("fecha").textContent = P.fmtFecha(d); });
+
+  const palabras = (t) => P.esc(t).split(" ").map((w, k) => `<span class="w" style="animation-delay:${(k * 0.06).toFixed(2)}s">${w}</span>`).join(" ");
+
+  P.iniciar({
+    cadaMs: 15000,
+    alCargar(d) {
+      $("estado").textContent = { vivo: "En vivo", cache: "Sin red · copia", demo: "Sin conexión" }[d.origen] + ` · ${d.total - d.caidas}/${d.total} fuentes`;
+      const t = d.recientes.slice(0, 24).map((n) => `<div class="card"><b>${P.esc(n.fuente)} · ${P.haceCuanto(n.fecha)}</b><span>${P.esc(n.titulo)}</span></div>`).join("");
+      $("pista").innerHTML = t + t;
+      // conteo por medio (cita todas las fuentes que alimentan la pantalla)
+      const cuenta = {};
+      d.recientes.forEach((n) => (cuenta[n.fuenteId] = (cuenta[n.fuenteId] || 0) + 1));
+      const max = Math.max(1, ...Object.values(cuenta));
+      $("barras").innerHTML = d.fuentes.map((f) => `<span data-id="${P.esc(f.id)}">${P.esc(f.nombre)}</span><div class="b"><i style="transform:scaleX(${(cuenta[f.id] || 0) / max})"></i></div><span class="n">${cuenta[f.id] || 0}</span>`).join("");
+    },
+    alRotar(n) {
+      $("principal").innerHTML = `
+        <div class="bg">${n.imagen ? `<img src="${P.esc(n.imagen)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</div>
+        <div class="etiq"><span class="chip">${P.esc(n.fuente)}</span><span class="chip g">${P.haceCuanto(n.fecha)}</span></div>
+        <h1>${palabras(n.titulo)}</h1>
+        <p class="resumen">${P.esc(n.resumen || "")}</p>`;
+      $("cita").innerHTML = `
+        <div><div class="lbl">Fuente</div><div class="src">${P.esc(n.fuente)}</div><div class="url">${P.esc(P.linkCorto(n.link))}</div><div class="lbl" style="margin-top:.8vw">Escaneá y leé la nota</div></div>
+        <div class="qr">${P.qrSVG(n.link, { color: "#070814" })}</div>`;
+      document.querySelectorAll("#barras > span[data-id]").forEach((s) => s.classList.toggle("on", s.dataset.id === n.fuenteId));
+    },
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bocetos de estilo · IO Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root { --fondo: #111214; --tarjeta: #1a1b1f; --borde: #2c2e34; --texto: #ecedef; --suave: #9b9ea8; --acento: #00ff41; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--fondo); color: var(--texto); font-family: "Instrument Sans", sans-serif; padding: 48px 16px 64px; }
+  .envoltorio { max-width: 1320px; margin: 0 auto; }
+  h1 { font-family: "Instrument Serif", serif; font-weight: 400; font-size: clamp(36px, 5vw, 64px); line-height: 1; letter-spacing: -.01em; }
+  h1 em { color: var(--acento); }
+  .intro { color: var(--suave); max-width: 760px; margin: 16px 0 36px; font-size: 17px; line-height: 1.6; }
+  .grilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr)); gap: 24px; }
+  .var { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+  .var.elegido { border-color: var(--acento); }
+  .marco { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #000; }
+  .marco iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
+  .info { padding: 18px 20px 20px; display: grid; gap: 8px; }
+  .fila { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .info h2 { font-family: "Instrument Serif", serif; font-weight: 400; font-size: 28px; }
+  .skill { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; border: 1px solid var(--borde); border-radius: 99px; padding: 4px 10px; color: var(--suave); white-space: nowrap; }
+  .elegido .skill.estado { border-color: var(--acento); color: var(--acento); }
+  .info p { color: var(--suave); line-height: 1.55; font-size: 15px; }
+  .info a { color: var(--texto); font-weight: 500; text-underline-offset: 3px; justify-self: start; }
+  .notas { margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+  .nota { border-top: 1px solid var(--borde); padding-top: 14px; color: var(--suave); font-size: 15px; line-height: 1.55; }
+  .nota b { color: var(--texto); display: block; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="envoltorio">
+  <h1>Pantalla de noticias <em>IT</em> · 4 estilos</h1>
+  <p class="intro">Los bocetos que se compararon antes de construir IO Display: el mismo contenido (noticias de informática con fuente citada y QR a la nota) con cuatro estéticas, una por cada skill de diseño. Se eligió el <b>Tablero de Informática</b>; los otros tres quedan como referencia para clientes que quieran otra estética. Clic en uno para verlo a pantalla completa (F11).</p>
+
+  <div class="grilla">
+    <article class="var">
+      <div class="marco"><iframe src="editorial.html" title="Boceto editorial"></iframe></div>
+      <div class="info">
+        <div class="fila"><h2>1 · Diario de Informática</h2><span class="skill">frontend-design</span></div>
+        <p>Diario impreso: papel con grano, Bodoni en los titulares, capitular, foto en blanco y negro y cinta de titulares abajo. Es la más cálida para un espacio de descanso.</p>
+        <a href="editorial.html">Abrir a pantalla completa →</a>
+      </div>
+    </article>
+
+    <article class="var elegido">
+      <div class="marco"><iframe src="flat.html" title="Boceto flat"></iframe></div>
+      <div class="info">
+        <div class="fila"><h2>2 · Tablero de Informática</h2><span class="skill estado">Elegido · ui-ux-pro-max</span></div>
+        <p>Sistema que propuso la skill: diseño plano, paleta slate con acento rojo, Newsreader + Roboto, cola "A continuación" y barra con todas las fuentes. Es la base de la pantalla de producción (<code>/tv</code>).</p>
+        <a href="flat.html">Abrir a pantalla completa →</a>
+      </div>
+    </article>
+
+    <article class="var">
+      <div class="marco"><iframe src="terminal.html" title="Boceto terminal"></iframe></div>
+      <div class="info">
+        <div class="fila"><h2>3 · Terminal</h2><span class="skill">web-animation-engines</span></div>
+        <p>Animada con Anime.js v4: el titular se escribe letra por letra, con líneas de barrido CRT y un log de entradas. Usa los colores de marca de IO Consulting (#0a0a0a + #00ff41). Ideal para un área técnica.</p>
+        <a href="terminal.html">Abrir a pantalla completa →</a>
+      </div>
+    </article>
+
+    <article class="var">
+      <div class="marco"><iframe src="aurora.html" title="Boceto aurora"></iframe></div>
+      <div class="info">
+        <div class="fila"><h2>4 · Radar IT</h2><span class="skill">animated-ui-sources</span></div>
+        <p>Fondo aurora, bento de vidrio, titular que se enfoca palabra por palabra, borde con haz de luz y marquesina, al estilo React Bits y Magic UI pero con código propio. Suma un gráfico de notas por medio.</p>
+        <a href="aurora.html">Abrir a pantalla completa →</a>
+      </div>
+    </article>
+  </div>
+
+  <div class="notas">
+    <div class="nota"><b>De dónde salen las noticias</b>Servidos por IO Display (<code>/bocetos/</code>), usan la misma lista curada que ven las TVs. Abiertos sueltos desde el disco, toman los RSS por rss2json, que no siempre responde con todos los medios.</div>
+    <div class="nota"><b>Son bocetos</b>Solo muestran noticias: los avisos propios, las plantillas de zonas y el mensaje urgente están en la pantalla de producción.</div>
+    <div class="nota"><b>Si un cliente elige otro estilo</b>Se adapta la estética de <code>public/tv.html</code>; la lógica de zonas, avisos y caché queda igual.</div>
+  </div>
+</div>
+<script>
+  // escala cada vista previa de 1920×1080 al ancho de su tarjeta
+  const ajustar = () => document.querySelectorAll(".marco").forEach((m) => (m.querySelector("iframe").style.transform = `scale(${m.clientWidth / 1920})`));
+  addEventListener("resize", ajustar);
+  ajustar();
+</script>
+</body>
+</html>

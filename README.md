@@ -77,6 +77,14 @@ instalación de cada cliente y tiene:
 
 Las TVs consultan al servidor cada 20 segundos, así que los cambios se ven enseguida, sin tocarlas.
 
+## Bocetos de estilo
+
+En `/bocetos/` están los cuatro diseños que se compararon antes de construir IO Display, uno por cada skill de
+diseño: Diario de Informática (editorial), **Tablero de Informática (el elegido)**, Terminal (Anime.js, con los
+colores de IO Consulting) y Radar IT (aurora y bento). Sirven como referencia si un cliente quiere otra
+estética. Muestran las mismas noticias que las TVs; abiertos sueltos desde el disco, usan rss2json como
+respaldo.
+
 ## Qué pasa si se corta algo
 
 | Corte | Qué hace |
@@ -99,6 +107,7 @@ public/tv.*         pantalla de las TVs
 public/admin.*      panel de administración
 public/sw.js        service worker (copia para cortes)
 public/vendor/      qrcode-generator (MIT, Kazuhiko Arase)
+bocetos/            los 4 estilos que se compararon, con su galería (/bocetos/)
 ejemplo/            contenido de demo (npm run ejemplo)
 scripts/            cargar-ejemplo.mjs
 data/               config, caché, imágenes y clave de cada instalación (no se sube al repo)
@@ -114,7 +123,9 @@ test/               npm test
   Se guardan con nombre aleatorio, y las que ningún aviso usa se borran solas.
 - Solo se aceptan feeds en direcciones públicas: se bloquean `localhost` y las IP de la red interna,
   también si un feed redirige hacia ellas.
-- Hay headers CSP y `nosniff`, y las pantallas solo pueden mostrarse embebidas en el propio admin.
+- Hay headers CSP y `nosniff`, y las pantallas solo pueden mostrarse embebidas en el propio admin. Los
+  bocetos tienen una CSP propia, más abierta, porque cargan GSAP, Anime.js y el QR desde CDN. La TV y el admin
+  mantienen la estricta.
 - El servidor usa http. Si el admin se va a usar fuera de la red local, hay que ponerlo detrás de https
   (por ejemplo, un proxy reverso o Cloudflare Tunnel).
 
