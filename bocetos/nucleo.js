@@ -6,6 +6,37 @@
 (function () {
   "use strict";
 
+  // Los bocetos son maquetas de TV 16:9 medidas en vw: en una ventana que no es una TV apaisada
+  // (celular, tablet, ventana chica) se deforman. Ahí la página se muestra a sí misma, completa,
+  // dentro de un marco 16:9 escalado, igual que en la galería.
+  // (el marco y la galería cargan el boceto a 1920×1080, así que adentro nunca vuelve a enmarcarse)
+  const enMarco = innerWidth < 1100 || innerWidth / innerHeight < 1.3;
+  if (enMarco) {
+    const estilo = document.createElement("style");
+    estilo.textContent = `
+      html { overflow: hidden; height: 100%; }
+      body.marco { all: unset; box-sizing: border-box; display: grid; place-items: center; align-content: center; gap: 12px; width: 100vw; height: 100vh; padding: 12px; background: #000; color: #cbd5e1; font: 15px/1.4 system-ui, sans-serif; cursor: auto; }
+      body.marco::before, body.marco::after { display: none !important; }
+      body.marco .caja { position: relative; overflow: hidden; outline: 1px solid #334155; }
+      body.marco iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; }
+      body.marco p { margin: 0; text-align: center; max-width: 60ch; }
+      body.marco a { color: #f8fafc; display: inline-flex; align-items: center; min-height: 44px; }`;
+    document.head.appendChild(estilo);
+    document.body.className = "marco";
+    document.body.innerHTML = `<p>Boceto pensado para una TV 16:9. En el celular, girá la pantalla para verlo más grande.</p>
+      <div class="caja"><iframe src="${location.href}" title="${document.title}"></iframe></div>
+      <p><a href="./">← Volver a la galería</a></p>`;
+    const ajustar = () => {
+      const ancho = Math.max(240, Math.min(innerWidth - 24, (innerHeight - 140) * 16 / 9));
+      const caja = document.querySelector(".caja");
+      caja.style.width = ancho + "px";
+      caja.style.height = (ancho * 9) / 16 + "px";
+      caja.querySelector("iframe").style.transform = `scale(${ancho / 1920})`;
+    };
+    addEventListener("resize", ajustar);
+    ajustar();
+  }
+
   const FUENTES = window.FUENTES_IT || [];
   const CLAVE_CACHE = "io-display:bocetos:v1";
   const POR_FUENTE = 6;
@@ -185,6 +216,7 @@
   // ---------- ciclo de vida ----------
   // iniciar({ alCargar(datos), alRotar(nota, indice, datos), cadaMs })
   function iniciar({ alCargar, alRotar, cadaMs = 14000 }) {
+    if (enMarco) return; // la rotación corre dentro del marco
     let datos = null;
     let i = 0;
     const paso = () => {
@@ -209,6 +241,7 @@
   }
 
   function reloj(fn) {
+    if (enMarco) return;
     fn(new Date());
     setInterval(() => fn(new Date()), 1000);
   }

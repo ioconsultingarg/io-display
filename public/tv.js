@@ -147,7 +147,24 @@ function htmlAviso(aviso, marca) {
   </article>`;
 }
 
+// El resumen muestra solo las líneas completas que entran en el alto disponible (celular, tablet, TV)
+function ajustarTexto(el) {
+  const t = el.querySelector(".tarjeta .texto");
+  if (!t) return;
+  t.style.display = "";
+  t.style.webkitLineClamp = "";
+  const alto = t.getBoundingClientRect().height;
+  const linea = parseFloat(getComputedStyle(t).lineHeight) || 20;
+  const lineas = Math.floor((alto + 1) / linea);
+  if (lineas < 2 || !t.textContent.trim()) t.style.display = "none";
+  else t.style.webkitLineClamp = String(Math.min(lineas, 6));
+}
+addEventListener("resize", () => document.querySelectorAll(".zona").forEach(ajustarTexto));
+
 // ---------- controladores de zona ----------
+// Lo que muestra cada zona en este momento: así dos zonas no repiten el mismo contenido a la vez
+const enPantalla = new Map();
+
 // Rotador: muestra de a una noticia o aviso, cada uno con su duración.
 function rotador(el, tipo, desfase, alCambiar) {
   let lista = [];
@@ -163,10 +180,25 @@ function rotador(el, tipo, desfase, alCambiar) {
       return;
     }
     i = i % lista.length;
+    const otras = new Set([...enPantalla].filter(([zona]) => zona !== el).map(([, id]) => id));
+    for (let k = 0; k < lista.length; k++) {
+      if (!otras.has(lista[(i + k) % lista.length].id)) {
+        i = (i + k) % lista.length;
+        break;
+      }
+    }
     const item = lista[i];
+    enPantalla.set(el, item.id);
     const ms = duracion(item, d);
     el.innerHTML = item.clase === "aviso" ? htmlAviso(item, d.marca) : htmlNoticia(item);
-    el.querySelectorAll("img").forEach((img) => img.addEventListener("error", () => img.remove()));
+    el.querySelectorAll("img").forEach((img) => {
+      img.addEventListener("error", () => {
+        img.remove();
+        ajustarTexto(el);
+      });
+      img.addEventListener("load", () => ajustarTexto(el)); // la foto cambia el alto que le queda al resumen
+    });
+    ajustarTexto(el);
     animar([...el.querySelectorAll(".tarjeta > :not(.progreso), .afiche > img")], { opacity: 0, transform: "translateY(16px)" });
     barraProgreso(el.querySelector(".progreso i"), ms);
     const siguientes = [];
@@ -189,7 +221,10 @@ function rotador(el, tipo, desfase, alCambiar) {
       if (pos >= 0) i = pos;
       else mostrar(); // lo que se veía ya no está (lo sacaron desde el admin): pasar a otro ya
     },
-    destruir: () => clearTimeout(t),
+    destruir: () => {
+      clearTimeout(t);
+      enPantalla.delete(el);
+    },
   };
 }
 
@@ -201,7 +236,10 @@ function cola(el) {
       lista.innerHTML = siguientes
         .map((s, k) => `<div class="item"><div class="q"><b>${esc(s.clase === "aviso" ? datos.marca.nombre : s.fuente)}</b><span class="mono">${k === 0 ? "Siguiente" : s.clase === "aviso" ? "" : haceCuanto(s.fecha)}</span></div><p>${esc(s.titulo)}</p></div>`)
         .join("");
-      animar([...lista.children], { opacity: 0, transform: "translateY(16px) scale(.92)" }, { delay: 200 });
+      // solo las tarjetas que entran completas (en pantallas chicas o con títulos largos)
+      const alto = lista.clientHeight;
+      [...lista.children].forEach((it) => it.classList.toggle("no-entra", it.offsetTop - lista.offsetTop + it.offsetHeight > alto + 1));
+      animar([...lista.children].filter((it) => !it.classList.contains("no-entra")), { opacity: 0, transform: "translateY(16px) scale(.92)" }, { delay: 200 });
     },
   };
 }

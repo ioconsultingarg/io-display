@@ -57,10 +57,10 @@
   .etiq { display: inline-flex; gap: .7vw; align-items: center; margin-bottom: 1.2vw; }
   .chip { border-radius: 99px; padding: .35vw 1vw; font-size: 1vw; font-weight: 700; background: linear-gradient(90deg, var(--c1), var(--c2)); color: #061018; }
   .chip.g { background: rgba(255,255,255,.1); color: var(--texto); font-weight: 500; }
-  h1 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 3.6vw; line-height: 1.05; letter-spacing: -.025em; text-wrap: balance; }
+  h1 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 3.6vw; line-height: 1.12; letter-spacing: -.025em; text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; padding-bottom: .1em; }
   h1 .w { display: inline-block; opacity: 0; filter: blur(12px); transform: translateY(.6em); animation: nitido .8s cubic-bezier(.2,.7,.2,1) forwards; }
   @keyframes nitido { to { opacity: 1; filter: blur(0); transform: none; } }
-  .resumen { margin-top: 1.2vw; font-size: 1.35vw; line-height: 1.55; color: #d6d4ee; max-width: 46vw; opacity: 0; animation: nitido .9s .9s forwards; }
+  .resumen { margin-top: 1.2vw; font-size: 1.35vw; line-height: 1.55; color: #d6d4ee; max-width: 46vw; opacity: 0; animation: nitido .9s .9s forwards; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
   .cita { padding: 1.8vw; display: grid; grid-template-columns: 1fr 9vw; gap: 1.4vw; align-items: center; }
   .cita .lbl { font-size: .9vw; text-transform: uppercase; letter-spacing: .14em; color: var(--suave); }
@@ -69,9 +69,10 @@
   .cita .qr { background: #fff; border-radius: .8vw; padding: .5vw; }
   .cita .qr svg { display: block; }
 
-  .medios { padding: 1.6vw 1.8vw; display: flex; flex-direction: column; }
+  .medios { padding: 1.6vw 1.8vw; display: flex; flex-direction: column; min-height: 0; }
   .medios h3 { font-size: .9vw; text-transform: uppercase; letter-spacing: .14em; color: var(--suave); font-weight: 500; margin-bottom: .8vw; }
-  .barras { display: grid; grid-template-columns: auto 1fr auto; gap: .45vw .8vw; align-items: center; font-size: .95vw; flex: 1; align-content: space-between; }
+  /* las filas se reparten el alto disponible: entran todas las fuentes, sean 8 o 12 */
+  .barras { display: grid; grid-template-columns: auto 1fr auto; grid-auto-rows: minmax(0, 1fr); gap: 0 .8vw; align-items: center; font-size: min(.95vw, 1.75vh); flex: 1; min-height: 0; }
   .barras .b { height: .55vw; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
   .barras .b i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--c4), var(--c1)); transform-origin: left; transition: transform 1.2s cubic-bezier(.2,.7,.2,1); }
   .barras .on { color: var(--c2); font-weight: 700; }

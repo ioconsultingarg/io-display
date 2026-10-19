@@ -28,7 +28,7 @@
     /* grano de papel */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
-  .meta { font-family: "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: .12em; font-size: .78vw; }
+  .meta { font-family: "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: .12em; font-size: max(.78vw, 11px); }
 
   /* ---- cabezal ---- */
   header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; padding-bottom: .9vw; border-bottom: .35vw double var(--regla); }
@@ -51,9 +51,9 @@
   .bajada::first-letter { font-family: "Bodoni Moda", serif; font-weight: 800; float: left; font-size: 4.2vw; line-height: .8; padding: .3vw .5vw 0 0; color: var(--tinta); }
   .cita { display: grid; grid-template-columns: 1fr 7vw; gap: 1vw; align-items: end; border-top: 2px solid var(--regla); padding-top: .8vw; }
   .cita .fuente { font-family: "Bodoni Moda", serif; font-style: italic; font-size: 1.6vw; }
-  .cita .url { margin-top: .3vw; font-size: .72vw; word-break: break-all; color: var(--tinta-suave); text-transform: none; letter-spacing: .02em; }
+  .cita .url { margin-top: .3vw; font-size: max(.72vw, 11px); word-break: break-all; color: var(--tinta-suave); text-transform: none; letter-spacing: .02em; }
   .cita .qr { background: var(--papel); }
-  .cita .qr small { display: block; text-align: center; font-size: .55vw; margin-top: .2vw; }
+  .cita .qr small { display: block; text-align: center; font-size: max(.55vw, 11px); margin-top: .2vw; }
   .progreso { position: absolute; left: 0; right: 0; bottom: -.8vw; height: 2px; background: var(--papel-2); }
   .progreso i { display: block; height: 100%; background: var(--rojo); transform-origin: left; transform: scaleX(0); }
 
